@@ -1,0 +1,302 @@
+export const languages = [
+  {
+    code: "vi",
+    label: "Tiếng Việt",
+    speech: "vi-VN",
+  },
+  {
+    code: "en",
+    label: "English",
+    speech: "en-US",
+  },
+  {
+    code: "zh",
+    label: "中文",
+    speech: "zh-CN",
+  },
+  {
+    code: "ja",
+    label: "日本語",
+    speech: "ja-JP",
+  },
+  {
+    code: "ko",
+    label: "한국어",
+    speech: "ko-KR",
+  },
+];
+
+export const categories = [
+  {
+    key: "all",
+    label: {
+      vi: "Tất cả",
+      en: "All",
+      zh: "全部",
+      ja: "すべて",
+      ko: "전체",
+    },
+  },
+  {
+    key: "pho",
+    label: {
+      vi: "Phở",
+      en: "Pho",
+      zh: "河粉",
+      ja: "フォー",
+      ko: "쌀국수",
+    },
+  },
+  {
+    key: "banh-mi",
+    label: {
+      vi: "Bánh mì",
+      en: "Banh Mi",
+      zh: "越南法棍",
+      ja: "バインミー",
+      ko: "반미",
+    },
+  },
+  {
+    key: "food",
+    label: {
+      vi: "Món Việt",
+      en: "Vietnamese Food",
+      zh: "越南料理",
+      ja: "ベトナム料理",
+      ko: "베트남 음식",
+    },
+  },
+  {
+    key: "drink",
+    label: {
+      vi: "Đồ uống",
+      en: "Drinks",
+      zh: "饮料",
+      ja: "ドリンク",
+      ko: "음료",
+    },
+  },
+];
+
+export const mockPois = [
+  {
+    id: "poi-001",
+    icon: "🍜",
+    categoryKey: "pho",
+    rating: 4.8,
+    isOpen: true,
+    distance: 350,
+    position: {
+      x: 43,
+      y: 34,
+    },
+
+    content: {
+      vi: {
+        name: "Phở Quận 4",
+        category: "Phở",
+        description: "Phở truyền thống tại khu vực Quận 4.",
+        speechText:
+          "Đây là Phở Quận 4, một địa điểm phục vụ phở truyền thống tại Quận 4.",
+      },
+
+      en: {
+        name: "District 4 Pho",
+        category: "Pho",
+        description: "Traditional Vietnamese pho in District 4.",
+        speechText:
+          "This is District 4 Pho, a place serving traditional Vietnamese pho.",
+      },
+
+      zh: {
+        name: "第四郡河粉",
+        category: "河粉",
+        description: "第四郡的传统越南河粉。",
+        speechText:
+          "这里是第四郡河粉，一家提供传统越南河粉的地方。",
+      },
+
+      ja: {
+        name: "4区のフォー",
+        category: "フォー",
+        description: "4区で楽しめるベトナムの伝統的なフォーです。",
+        speechText:
+          "ここは4区のフォーです。ベトナムの伝統的なフォーを楽しめます。",
+      },
+
+      ko: {
+        name: "4군 쌀국수",
+        category: "쌀국수",
+        description: "4군에서 즐길 수 있는 전통 베트남 쌀국수입니다.",
+        speechText:
+          "이곳은 4군 쌀국수입니다. 전통적인 베트남 쌀국수를 즐길 수 있습니다.",
+      },
+    },
+  },
+
+  {
+    id: "poi-002",
+    icon: "🥖",
+    rating: 4.7,
+    categoryKey: "banh-mi",
+    isOpen: true,
+    distance: 650,
+    position: {
+      x: 66,
+      y: 48,
+    },
+
+    content: {
+      vi: {
+        name: "Bánh mì Quận 4",
+        category: "Bánh mì",
+        description: "Bánh mì đường phố với nhiều loại nhân.",
+        speechText:
+          "Đây là Bánh mì Quận 4, một địa điểm phục vụ bánh mì đường phố.",
+      },
+
+      en: {
+        name: "District 4 Banh Mi",
+        category: "Banh Mi",
+        description: "Vietnamese street-style banh mi.",
+        speechText:
+          "This is District 4 Banh Mi, a place serving Vietnamese street-style banh mi.",
+      },
+
+      zh: {
+        name: "第四郡越南法棍",
+        category: "越南法棍",
+        description: "传统的越南街头法棍。",
+        speechText:
+          "这里是第四郡越南法棍，一家提供越南街头法棍的地方。",
+      },
+
+      ja: {
+        name: "4区のバインミー",
+        category: "バインミー",
+        description: "ベトナムのストリートフード、バインミーです。",
+        speechText:
+          "ここは4区のバインミーです。ベトナムのストリートフードを楽しめます。",
+      },
+
+      ko: {
+        name: "4군 반미",
+        category: "반미",
+        description: "베트남식 길거리 음식 반미를 맛볼 수 있습니다.",
+        speechText:
+          "이곳은 4군 반미입니다. 베트남식 길거리 음식인 반미를 즐길 수 있습니다.",
+      },
+    },
+  },
+
+  {
+    id: "poi-003",
+    icon: "🍲",
+    rating: 4.6,
+    categoryKey: "food",
+    isOpen: true,
+    distance: 900,
+    position: {
+      x: 36,
+      y: 61,
+    },
+
+    content: {
+      vi: {
+        name: "Quán ăn địa phương",
+        category: "Món Việt",
+        description: "Các món ăn mang phong cách địa phương.",
+        speechText:
+          "Đây là một quán ăn địa phương với các món ăn mang phong cách ẩm thực Việt Nam.",
+      },
+
+      en: {
+        name: "Local Food Restaurant",
+        category: "Vietnamese Food",
+        description: "A local restaurant serving Vietnamese dishes.",
+        speechText:
+          "This is a local restaurant serving Vietnamese dishes.",
+      },
+
+      zh: {
+        name: "当地餐馆",
+        category: "越南料理",
+        description: "提供当地风味的越南菜。",
+        speechText:
+          "这里是一家当地餐馆，提供越南风味的菜肴。",
+      },
+
+      ja: {
+        name: "地元のレストラン",
+        category: "ベトナム料理",
+        description: "地元スタイルのベトナム料理を提供します。",
+        speechText:
+          "ここは地元のレストランです。ベトナム料理を楽しめます。",
+      },
+
+      ko: {
+        name: "현지 음식점",
+        category: "베트남 음식",
+        description: "현지 스타일의 베트남 음식을 제공합니다.",
+        speechText:
+          "이곳은 현지 음식점입니다. 베트남 음식을 즐길 수 있습니다.",
+      },
+    },
+  },
+
+  {
+    id: "poi-004",
+    icon: "🥤",
+    rating: 4.5,
+    categoryKey: "drink",
+    isOpen: true,
+    distance: 1200,
+    position: {
+      x: 71,
+      y: 24,
+    },
+
+    content: {
+      vi: {
+        name: "Quán nước ven đường",
+        category: "Đồ uống",
+        description: "Không gian đồ uống mang phong cách địa phương.",
+        speechText:
+          "Đây là một quán nước ven đường mang phong cách địa phương.",
+      },
+
+      en: {
+        name: "Street Drink Shop",
+        category: "Drinks",
+        description: "A local-style street drink shop.",
+        speechText:
+          "This is a local-style street drink shop.",
+      },
+
+      zh: {
+        name: "街边饮品店",
+        category: "饮料",
+        description: "具有当地风格的街边饮品店。",
+        speechText:
+          "这里是一家具有当地风格的街边饮品店。",
+      },
+
+      ja: {
+        name: "街角のドリンク店",
+        category: "ドリンク",
+        description: "地元スタイルのドリンクを提供します。",
+        speechText:
+          "ここは地元スタイルのドリンク店です。",
+      },
+
+      ko: {
+        name: "길거리 음료점",
+        category: "음료",
+        description: "현지 스타일의 음료를 판매합니다.",
+        speechText:
+          "이곳은 현지 스타일의 길거리 음료점입니다.",
+      },
+    },
+  },
+];

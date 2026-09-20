@@ -1,16 +1,7 @@
-function MyButton() {
-  return (
-    <button>
-      I'm a button
-    </button>
-  );
+import MapApp from "./MapApp";
+
+function App() {
+  return <MapApp />;
 }
 
-export default function MyApp() {
-  return (
-    <div>
-      <h1>Welcome to my app</h1>
-      <MyButton />
-    </div>
-  );
-}
+export default App;
