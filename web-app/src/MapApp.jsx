@@ -194,6 +194,7 @@ function MapApp() {
           </div>
 
           <AudioPlayer
+            key={`${selectedPoi?.id}-${language}`}
             poi={selectedPoi}
             language={language}
             speechLanguage={speechLanguage}

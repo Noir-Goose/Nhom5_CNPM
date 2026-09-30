@@ -7,7 +7,6 @@ function AudioPlayer({ poi, language, speechLanguage }) {
 
   useEffect(() => {
     window.speechSynthesis?.cancel();
-    setStatus("idle");
   }, [poi, language]);
 
   if (!poi || !content) {
