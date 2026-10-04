@@ -21,6 +21,7 @@ function MapApp() {
 
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState("");
+  const [languageError, setLanguageError] = useState("");
 
 
   const speechLanguage =
@@ -60,10 +61,34 @@ function MapApp() {
   };
 
   const handleLanguageChange = (nextLanguage) => {
+  setLanguageError("");
+
+  const isSupported = languages.some(
+    (item) => item.code === nextLanguage
+  );
+
+  if (!isSupported) {
+    setLanguageError(
+      "Selected language is not supported"
+    );
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      "q4-language",
+      nextLanguage
+    );
+
     window.speechSynthesis?.cancel();
 
     setLanguage(nextLanguage);
-  };
+  } catch {
+    setLanguageError(
+      "Can not save language. Keep the current language"
+    );
+  }
+};
 
   const handleLocate = () => {
     setLocationError("");
@@ -111,6 +136,11 @@ function MapApp() {
           languages={languages}
           onChange={handleLanguageChange}
         />
+        {languageError && (
+          <div className="language-error">
+            {languageError}
+          </div>
+        )}
       </header>
 
       <main className="main-layout">
