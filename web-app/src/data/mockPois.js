@@ -300,3 +300,12 @@ export const mockPois = [
     },
   },
 ];
+export const uiLabels = {
+  selectedPlace: {
+    vi: "ĐỊA ĐIỂM ĐƯỢC CHỌN",
+    en: "SELECTED PLACE",
+    zh: "已选择的地点",
+    ja: "選択した場所",
+    ko: "선택한 장소",
+  },
+};
