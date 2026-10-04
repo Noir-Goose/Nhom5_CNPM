@@ -1,48 +1,100 @@
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import "./App.css";
 
 import {
   categories,
   languages,
-  mockPois,
 } from "./data/mockPois";
 
 import AppHeader from "./components/AppHeader";
 import DiscoveryPanel from "./components/DiscoveryPanel";
+import MapStatus from "./components/map/MapStatus";
 import MapView from "./components/map/MapView";
 import SelectedPoiPanel from "./components/SelectedPoiPanel";
 
 import { saveLanguage } from "./services/languageService";
+import { loadPois } from "./services/poiService";
 
 function MapApp() {
   // =========================
-  // App state
+  // UC2: POI loading state
   // =========================
-  const [language, setLanguage] = useState("vi");
-  const [selectedPoi, setSelectedPoi] = useState(
-    mockPois[0] ?? null
-  );
-  const [searchTerm, setSearchTerm] = useState("");
+  const [pois, setPois] = useState([]);
+  const [isLoadingPois, setIsLoadingPois] =
+    useState(true);
+  const [poiLoadError, setPoiLoadError] =
+    useState("");
+
+  const [selectedPoi, setSelectedPoi] =
+    useState(null);
+
+  // =========================
+  // App / UI state
+  // =========================
+  const [language, setLanguage] =
+    useState("vi");
+
+  const [searchTerm, setSearchTerm] =
+    useState("");
+
   const [selectedCategory, setSelectedCategory] =
     useState("all");
+
   const [languageError, setLanguageError] =
     useState("");
 
   // =========================
-  // Derived data
+  // UC2: Load map and POIs
+  // =========================
+  useEffect(() => {
+    const fetchPois = async () => {
+      setIsLoadingPois(true);
+      setPoiLoadError("");
+
+      try {
+        const loadedPois = await loadPois();
+
+        setPois(loadedPois);
+
+        setSelectedPoi(
+          loadedPois.length > 0
+            ? loadedPois[0]
+            : null
+        );
+      } catch {
+        setPoiLoadError(
+          "Không thể tải bản đồ và danh sách địa điểm."
+        );
+      } finally {
+        setIsLoadingPois(false);
+      }
+    };
+
+    fetchPois();
+  }, []);
+
+  // =========================
+  // Language
   // =========================
   const speechLanguage =
     languages.find(
       (item) => item.code === language
     )?.speech ?? "vi-VN";
 
+  // =========================
+  // Filter POIs
+  // =========================
   const filteredPois = useMemo(() => {
     const normalizedSearch = searchTerm
       .trim()
       .toLowerCase();
 
-    return mockPois.filter((poi) => {
+    return pois.filter((poi) => {
       const content = poi.content[language];
 
       const matchesSearch =
@@ -64,6 +116,7 @@ function MapApp() {
       return matchesSearch && matchesCategory;
     });
   }, [
+    pois,
     language,
     searchTerm,
     selectedCategory,
@@ -72,7 +125,9 @@ function MapApp() {
   // =========================
   // UC1: Select Language
   // =========================
-  const handleLanguageChange = (nextLanguage) => {
+  const handleLanguageChange = (
+    nextLanguage
+  ) => {
     setLanguageError("");
 
     try {
@@ -91,7 +146,7 @@ function MapApp() {
   };
 
   // =========================
-  // POI selection
+  // Select POI
   // =========================
   const handleSelectPoi = (poi) => {
     setSelectedPoi(poi);
@@ -102,7 +157,9 @@ function MapApp() {
       <AppHeader
         language={language}
         languages={languages}
-        onLanguageChange={handleLanguageChange}
+        onLanguageChange={
+          handleLanguageChange
+        }
         languageError={languageError}
       />
 
@@ -116,23 +173,36 @@ function MapApp() {
           selectedPoi={selectedPoi}
           speechLanguage={speechLanguage}
           onSearchChange={setSearchTerm}
-          onClearSearch={() => setSearchTerm("")}
-          onCategoryChange={setSelectedCategory}
+          onClearSearch={() =>
+            setSearchTerm("")
+          }
+          onCategoryChange={
+            setSelectedCategory
+          }
           onSelectPoi={handleSelectPoi}
         />
 
         <section className="map-area">
-          <MapView
-            pois={mockPois}
-            selectedPoi={selectedPoi}
-            language={language}
-            onSelectPoi={handleSelectPoi}
+          <MapStatus
+            loading={isLoadingPois}
+            error={poiLoadError}
           />
 
-          <SelectedPoiPanel
-            selectedPoi={selectedPoi}
-            language={language}
-          />
+          {!isLoadingPois && !poiLoadError && (
+            <>
+              <MapView
+                pois={pois}
+                selectedPoi={selectedPoi}
+                language={language}
+                onSelectPoi={handleSelectPoi}
+              />
+
+              <SelectedPoiPanel
+                selectedPoi={selectedPoi}
+                language={language}
+              />
+            </>
+          )}
         </section>
       </main>
     </div>

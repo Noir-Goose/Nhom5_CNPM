@@ -911,3 +911,22 @@ body {
     height: 58px;
   }
 }
+.map-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+
+  padding: 16px 20px;
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  font-weight: 600;
+}
+
+.map-status.error {
+  color: #b42318;
+}
