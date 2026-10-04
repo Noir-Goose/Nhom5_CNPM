@@ -1,5 +1,4 @@
 import POICard from "./POICard";
-import AudioPlayer from "./AudioPlayer";
 
 function DiscoveryPanel({
   filteredPois,
@@ -8,7 +7,6 @@ function DiscoveryPanel({
   searchTerm,
   selectedCategory,
   selectedPoi,
-  speechLanguage,
   onSearchChange,
   onClearSearch,
   onCategoryChange,
@@ -22,7 +20,17 @@ function DiscoveryPanel({
             KHÁM PHÁ
           </span>
 
-          <h2>Địa điểm gần bạn</h2>
+          <h2>
+            {language === "vi"
+              ? "Địa điểm"
+              : language === "en"
+                ? "Places"
+                : language === "zh"
+                  ? "地点"
+                  : language === "ja"
+                    ? "スポット"
+                    : "장소"}
+          </h2>
         </div>
 
         <span className="result-count">
@@ -34,12 +42,24 @@ function DiscoveryPanel({
         <span>⌕</span>
 
         <input
+          type="text"
           value={searchTerm}
           onChange={(event) =>
-            onSearchChange(event.target.value)
+            onSearchChange(
+              event.target.value
+            )
           }
-          type="text"
-          placeholder="Tìm món ăn, địa điểm..."
+          placeholder={
+            language === "vi"
+              ? "Tìm địa điểm..."
+              : language === "en"
+                ? "Search places..."
+                : language === "zh"
+                  ? "搜索地点..."
+                  : language === "ja"
+                    ? "スポットを検索..."
+                    : "장소 검색..."
+          }
         />
 
         {searchTerm && (
@@ -47,6 +67,7 @@ function DiscoveryPanel({
             type="button"
             className="clear-search"
             onClick={onClearSearch}
+            aria-label="Xóa tìm kiếm"
           >
             ×
           </button>
@@ -56,18 +77,22 @@ function DiscoveryPanel({
       <div className="category-list">
         {categories.map((category) => (
           <button
-            type="button"
             key={category.key}
+            type="button"
             className={`category-chip ${
               selectedCategory === category.key
                 ? "active"
                 : ""
             }`}
             onClick={() =>
-              onCategoryChange(category.key)
+              onCategoryChange(
+                category.key
+              )
             }
           >
-            {category.label[language]}
+            {category.label?.[language] ??
+              category.label?.vi ??
+              category.key}
           </button>
         ))}
       </div>
@@ -75,10 +100,28 @@ function DiscoveryPanel({
       <div className="poi-list">
         {filteredPois.length === 0 ? (
           <div className="empty-state">
-            <strong>Không tìm thấy địa điểm</strong>
+            <strong>
+              {language === "vi"
+                ? "Không tìm thấy địa điểm"
+                : language === "en"
+                  ? "No places found"
+                  : language === "zh"
+                    ? "没有找到地点"
+                    : language === "ja"
+                      ? "場所が見つかりません"
+                      : "장소를 찾을 수 없습니다"}
+            </strong>
 
             <p>
-              Thử từ khóa hoặc danh mục khác.
+              {language === "vi"
+                ? "Thử thay đổi từ khóa hoặc danh mục."
+                : language === "en"
+                  ? "Try another keyword or category."
+                  : language === "zh"
+                    ? "尝试其他关键词或类别。"
+                    : language === "ja"
+                      ? "別のキーワードやカテゴリを試してください。"
+                      : "다른 키워드나 카테고리를 사용해 보세요."}
             </p>
           </div>
         ) : (
@@ -87,19 +130,16 @@ function DiscoveryPanel({
               key={poi.id}
               poi={poi}
               language={language}
-              selected={selectedPoi?.id === poi.id}
-              onSelect={onSelectPoi}
+              isSelected={
+                selectedPoi?.id === poi.id
+              }
+              onSelect={() =>
+                onSelectPoi(poi)
+              }
             />
           ))
         )}
       </div>
-
-      <AudioPlayer
-        key={`${selectedPoi?.id}-${language}`}
-        poi={selectedPoi}
-        language={language}
-        speechLanguage={speechLanguage}
-      />
     </aside>
   );
 }

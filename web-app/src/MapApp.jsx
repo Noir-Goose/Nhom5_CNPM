@@ -33,6 +33,9 @@ function MapApp() {
   const [selectedPoi, setSelectedPoi] =
     useState(null);
 
+  const [isPoiDetailsOpen, setIsPoiDetailsOpen] =
+    useState(false);
+
   // =========================
   // App / UI state
   // =========================
@@ -95,7 +98,11 @@ function MapApp() {
       .toLowerCase();
 
     return pois.filter((poi) => {
-      const content = poi.content[language];
+      const content = poi.content?.[language];
+
+      if (!content) {
+        return false;
+      }
 
       const matchesSearch =
         !normalizedSearch ||
@@ -149,7 +156,16 @@ function MapApp() {
   // Select POI
   // =========================
   const handleSelectPoi = (poi) => {
+    window.speechSynthesis?.cancel();
+
     setSelectedPoi(poi);
+    setIsPoiDetailsOpen(true);
+  };
+
+  const handleClosePoi = () => {
+    window.speechSynthesis?.cancel();
+
+    setIsPoiDetailsOpen(false);
   };
 
   return (
@@ -171,7 +187,6 @@ function MapApp() {
           searchTerm={searchTerm}
           selectedCategory={selectedCategory}
           selectedPoi={selectedPoi}
-          speechLanguage={speechLanguage}
           onSearchChange={setSearchTerm}
           onClearSearch={() =>
             setSearchTerm("")
@@ -197,10 +212,15 @@ function MapApp() {
                 onSelectPoi={handleSelectPoi}
               />
 
-              <SelectedPoiPanel
-                selectedPoi={selectedPoi}
-                language={language}
-              />
+              {isPoiDetailsOpen && (
+                <SelectedPoiPanel
+                  key={`${selectedPoi?.id}-${language}`}
+                  selectedPoi={selectedPoi}
+                  language={language}
+                  speechLanguage={speechLanguage}
+                  onClose={handleClosePoi}
+                />
+              )}
             </>
           )}
         </section>

@@ -1,108 +1,218 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-function AudioPlayer({ poi, language, speechLanguage }) {
+import { uiLabels } from "../data/mockPois";
+
+function AudioPlayer({
+  poi,
+  language,
+  speechLanguage,
+}) {
   const [status, setStatus] = useState("idle");
 
-  const content = poi?.content[language];
+  const currentIndexRef = useRef(0);
+  const isStoppingRef = useRef(false);
+
+  const content = poi?.content?.[language];
+
+  const narrationText =
+    content?.speechText ||
+    content?.description;
 
   useEffect(() => {
-    window.speechSynthesis?.cancel();
-  }, [poi, language]);
+    return () => {
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
 
   if (!poi || !content) {
     return null;
   }
 
-  const speak = () => {
+  const speakFrom = (startIndex = 0) => {
     if (!("speechSynthesis" in window)) {
       setStatus("unsupported");
       return;
     }
 
+    if (!narrationText) {
+      setStatus("error");
+      return;
+    }
+
+    const remainingText =
+      narrationText.slice(startIndex);
+
+    if (!remainingText.trim()) {
+      currentIndexRef.current = 0;
+      setStatus("finished");
+      return;
+    }
+
     window.speechSynthesis.cancel();
 
+    isStoppingRef.current = false;
+
     const utterance =
-      new SpeechSynthesisUtterance(content.speechText);
+      new SpeechSynthesisUtterance(
+        remainingText
+      );
 
     utterance.lang = speechLanguage;
 
     utterance.onstart = () => {
-      setStatus("playing");
+      if (!isStoppingRef.current) {
+        setStatus("playing");
+      }
+    };
+
+    utterance.onboundary = (event) => {
+      currentIndexRef.current =
+        startIndex + event.charIndex;
     };
 
     utterance.onend = () => {
-      setStatus("idle");
+      if (isStoppingRef.current) {
+        return;
+      }
+
+      currentIndexRef.current = 0;
+      setStatus("finished");
     };
 
     utterance.onerror = () => {
+      if (isStoppingRef.current) {
+        return;
+      }
+
       setStatus("error");
     };
 
     window.speechSynthesis.speak(utterance);
   };
 
+  const speak = () => {
+    currentIndexRef.current = 0;
+    speakFrom(0);
+  };
+
   const pause = () => {
-    window.speechSynthesis.pause();
+    if (status !== "playing") {
+      return;
+    }
+
+    isStoppingRef.current = true;
+
+    window.speechSynthesis.cancel();
+
     setStatus("paused");
   };
 
   const resume = () => {
-    window.speechSynthesis.resume();
-    setStatus("playing");
+    if (status !== "paused") {
+      return;
+    }
+
+    speakFrom(currentIndexRef.current);
   };
 
   const stop = () => {
+    isStoppingRef.current = true;
+
     window.speechSynthesis.cancel();
+
+    currentIndexRef.current = 0;
+
     setStatus("idle");
   };
 
+  const handleMainButton = () => {
+    if (status === "playing") {
+      pause();
+      return;
+    }
+
+    if (status === "paused") {
+      resume();
+      return;
+    }
+
+    speak();
+  };
+
+  // =========================
+  // Trạng thái ban đầu
+  // =========================
+  if (status === "idle") {
+    return (
+      <button
+        type="button"
+        className="listen-button"
+        onClick={speak}
+      >
+        {uiLabels.listenAudio[language]}
+      </button>
+    );
+  }
+
+  let statusText =
+    uiLabels.audio.playing[language];
+
+  if (status === "paused") {
+    statusText =
+      uiLabels.audio.paused[language];
+  }
+
+  if (status === "finished") {
+    statusText =
+      uiLabels.audio.finished[language];
+  }
+
+  if (status === "unsupported") {
+    statusText =
+      uiLabels.audio.unsupported[language];
+  }
+
+  if (status === "error") {
+    statusText =
+      uiLabels.audio.error[language];
+  }
+
   return (
-    <div className="audio-player">
-      <div className="audio-info">
-        <div className="audio-icon">
-          🔊
-        </div>
+    <div className="audio-controls">
+      <button
+        type="button"
+        className="audio-main-button"
+        onClick={handleMainButton}
+        aria-label={
+          status === "playing"
+            ? uiLabels.audio.paused[language]
+            : status === "paused"
+              ? uiLabels.audio.playing[language]
+              : uiLabels.listenAudio[language]
+        }
+      >
+        {status === "playing"
+          ? "❚❚"
+          : status === "finished"
+            ? "↻"
+            : "▶"}
+      </button>
 
-        <div>
-          <span>THUYẾT MINH</span>
+      <button
+        type="button"
+        className="audio-exit-button"
+        onClick={stop}
+      >
+        {uiLabels.audio.exit[language]}
+      </button>
 
-          <strong>{content.name}</strong>
-
-          <small>
-            {status === "playing"
-              ? "Đang phát"
-              : status === "paused"
-                ? "Đang tạm dừng"
-                : status === "unsupported"
-                  ? "Trình duyệt không hỗ trợ đọc thoại"
-                  : "Sẵn sàng phát"}
-          </small>
-        </div>
-      </div>
-
-      <div className="audio-controls">
-        {status === "playing" ? (
-          <button type="button" onClick={pause}>
-            ❚❚
-          </button>
-        ) : status === "paused" ? (
-          <button type="button" onClick={resume}>
-            ▶
-          </button>
-        ) : (
-          <button type="button" onClick={speak}>
-            ▶
-          </button>
-        )}
-
-        <button
-          type="button"
-          onClick={stop}
-          disabled={status === "idle"}
-        >
-          ■
-        </button>
-      </div>
+      <span className="audio-status">
+        {statusText}
+      </span>
     </div>
   );
 }
