@@ -69,9 +69,11 @@ function MapApp() {
             ? loadedPois[0]
             : null
         );
-      } catch {
-        setPoiLoadError(
-          "Không thể tải bản đồ và danh sách địa điểm."
+      } catch (error) {
+          console.error("Lỗi tải POI từ API:", error);
+
+          setPoiLoadError(
+            "Không thể tải bản đồ và danh sách địa điểm."
         );
       } finally {
         setIsLoadingPois(false);
