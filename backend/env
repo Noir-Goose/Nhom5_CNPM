@@ -1,0 +1,14 @@
+# Replace this value with the connection string copied from MongoDB Atlas.
+# Do not commit the real .env file or share your database password.
+MONGODB_URI=mongodb+srv://thaophuongho31_db_user:LTQdg50VfryZ5d81@cluster0.3kvaqvw.mongodb.net/?appName=Cluster0
+MONGODB_DB_NAME=q4_food_guide
+FRONTEND_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=ritathewall@gmail.com
+SMTP_PASSWORD=gjpq hjpz cgnl yauk
+SMTP_FROM_EMAIL=ritathewall@gmail.com
+
+JWT_SECRET_KEY=uKVgqMMhJc1wixPlqg0WXJMMBIYt4FV3L8J6kUryJhE
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=60
