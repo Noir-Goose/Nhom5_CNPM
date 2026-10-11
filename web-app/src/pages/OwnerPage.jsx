@@ -2,10 +2,11 @@ import { useState } from "react";
 import { submitPoiRequest } from "../services/authService";
 import LocationPicker from "../components/map/LocationPicker";
 import "./OwnerPage.css";
+import SubmissionStatus from "../components/SubmissionStatus";
 
 const menuItems = [
   { id: "uc7", icon: "📍", label: "Đăng ký địa điểm" },
-  { id: "uc8", icon: "📋", label: "Chức năng 2" },
+  { id: "uc8", icon: "📋", label: "Trạng thái yêu cầu" },
   { id: "uc9", icon: "🗂️", label: "Chức năng 3" },
 ];
 
@@ -518,11 +519,10 @@ function OwnerPage() {
                 </form>
               </section>
             </>
+          ) : activeMenu === "uc8" ? (
+            <SubmissionStatus />
           ) : (
             <section className="owner-card owner-coming-soon">
-              <div className="owner-summary-icon">
-                {selectedMenu.icon}
-              </div>
 
               <h1>{selectedMenu.label}</h1>
 

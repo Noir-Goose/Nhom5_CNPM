@@ -106,3 +106,52 @@ def submit_poi(
         "submissionId": submission["submissionId"],
         "status": submission["status"],
     }
+
+@router.get("/submissions")
+def get_my_submissions(
+    request: Request,
+    owner: dict[str, Any] = Depends(get_current_user),
+):
+    database: Database | None = getattr(
+        request.app.state, "database", None
+    )
+
+    if database is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database is not ready",
+        )
+
+    try:
+        submissions = list(
+            database["poi_submissions"]
+            .find({"createdBy": owner["_id"]})
+            .sort("createdAt", -1)
+        )
+
+        return [
+            {
+                "submissionId": item.get("submissionId", ""),
+                "name": item.get("name", ""),
+                "categoryKey": item.get("categoryKey", ""),
+                "address": item.get("address", ""),
+                "status": item.get("status", "pending"),
+                "createdAt": (
+                    item["createdAt"].isoformat()
+                    if item.get("createdAt")
+                    else None
+                ),
+                "updatedAt": (
+                    item["updatedAt"].isoformat()
+                    if item.get("updatedAt")
+                    else None
+                ),
+            }
+            for item in submissions
+        ]
+
+    except PyMongoError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not load POI submissions",
+        ) from error

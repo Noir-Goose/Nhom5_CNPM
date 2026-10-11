@@ -52,3 +52,37 @@ export async function submitPoiRequest(poiData) {
 
   return data;
 }
+
+
+export async function getMyPoiSubmissions() {
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error(
+      "Bạn chưa đăng nhập. Vui lòng đăng nhập lại."
+    );
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/owner/poi/submissions`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      typeof data.detail === "string"
+        ? data.detail
+        : "Không thể tải trạng thái yêu cầu."
+    );
+  }
+
+  return data;
+}
