@@ -1,134 +1,132 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+} from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
 function getPoiCoordinates(poi) {
-  // Hỗ trợ các cách đặt tên tọa độ thường gặp.
-  const latitude =
-    poi.latitude ??
-    poi.lat ??
-    poi.location?.latitude ??
-    poi.location?.lat;
+  if (!poi) return null;
 
-  const longitude =
+  const rawLatitude =
+    poi.latitude ?? poi.location?.latitude ?? poi.lat;
+
+  const rawLongitude =
     poi.longitude ??
-    poi.lng ??
-    poi.lon ??
     poi.location?.longitude ??
-    poi.location?.lng ??
-    poi.location?.lon;
+    poi.lng ??
+    poi.lon;
 
   if (
-    latitude == null ||
-    longitude == null ||
-    latitude === "" ||
-    longitude === ""
+    rawLatitude == null ||
+    rawLongitude == null ||
+    rawLatitude === "" ||
+    rawLongitude === ""
   ) {
     return null;
   }
 
-  const lat = Number(latitude);
-  const lng = Number(longitude);
+  const latitude = Number(rawLatitude);
+  const longitude = Number(rawLongitude);
 
   if (
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lng) ||
-    lat < -90 ||
-    lat > 90 ||
-    lng < -180 ||
-    lng > 180
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
   ) {
     return null;
   }
 
-  return { latitude: lat, longitude: lng };
+  return [latitude, longitude];
 }
 
-// Tính khoảng cách giữa hai tọa độ GPS theo km.
-function calculateDistance(pointA, pointB) {
-  const toRadians = (degrees) =>
-    (degrees * Math.PI) / 180;
-
+function calculateDistance(a, b) {
+  const toRad = (value) => (value * Math.PI) / 180;
   const earthRadiusKm = 6371;
 
-  const lat1 = toRadians(pointA.latitude);
-  const lat2 = toRadians(pointB.latitude);
-  const deltaLat = toRadians(
-    pointB.latitude - pointA.latitude
-  );
-  const deltaLng = toRadians(
-    pointB.longitude - pointA.longitude
-  );
+  const lat1 = toRad(a[0]);
+  const lat2 = toRad(b[0]);
+  const dLat = toRad(b[0] - a[0]);
+  const dLng = toRad(b[1] - a[1]);
 
-  const a =
-    Math.sin(deltaLat / 2) ** 2 +
+  const h =
+    Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1) *
       Math.cos(lat2) *
-      Math.sin(deltaLng / 2) ** 2;
+      Math.sin(dLng / 2) ** 2;
 
-  const safeA = Math.min(1, Math.max(0, a));
+  const safeH = Math.min(1, Math.max(0, h));
 
   return (
     2 *
     earthRadiusKm *
-    Math.atan2(
-      Math.sqrt(safeA),
-      Math.sqrt(1 - safeA)
-    )
+    Math.atan2(Math.sqrt(safeH), Math.sqrt(1 - safeH))
   );
 }
 
-function MapView({
-  pois,
+function FitSelectedPoi({ coordinates }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (coordinates) {
+      map.flyTo(coordinates, Math.max(map.getZoom(), 15), {
+        duration: 0.5,
+      });
+    }
+  }, [coordinates, map]);
+
+  return null;
+}
+
+export default function MapView({
+  pois = [],
   selectedPoi,
   language,
   onSelectPoi,
 }) {
-  const [zoom, setZoom] = useState(1);
-  const [userLocation, setUserLocation] =
-    useState(null);
-  const [locationError, setLocationError] =
-    useState("");
-  const [isLocating, setIsLocating] =
-    useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState("");
+  const [isLocating, setIsLocating] = useState(false);
+
+  const validPois = useMemo(() => {
+    return pois
+      .map((poi) => ({
+        poi,
+        coordinates: getPoiCoordinates(poi),
+      }))
+      .filter(
+        ({ poi, coordinates }) =>
+          coordinates &&
+          poi.isActive !== false &&
+          poi.approvalStatus !== "pending"
+      );
+  }, [pois]);
+
+  const selectedCoordinates = getPoiCoordinates(selectedPoi);
 
   const nearbyPois = useMemo(() => {
-    if (!userLocation) {
-      return [];
-    }
+    if (!userLocation) return [];
 
-    return pois
-      .map((poi) => {
-        const coordinates = getPoiCoordinates(poi);
-
-        if (!coordinates) {
-          return null;
-        }
-
-        return {
-          poi,
-          distance: calculateDistance(
-            userLocation,
-            coordinates
-          ),
-        };
-      })
-      .filter(
-        (item) =>
-          item !== null && item.distance <= 5
-      )
+    return validPois
+      .map(({ poi, coordinates }) => ({
+        poi,
+        distance: calculateDistance(userLocation, coordinates),
+      }))
+      .filter(({ distance }) => distance <= 5)
       .sort((a, b) => a.distance - b.distance);
-  }, [pois, userLocation]);
+  }, [validPois, userLocation]);
 
-  const handleZoomIn = () => {
-    setZoom((value) =>
-      Math.min(value + 0.1, 1.4)
-    );
-  };
-
-  const handleZoomOut = () => {
-    setZoom((value) =>
-      Math.max(value - 0.1, 0.8)
-    );
-  };
+  // Không dùng tọa độ mẫu để giả vờ rằng đó là vị trí POI thật.
+  const initialCenter =
+    selectedCoordinates ??
+    validPois[0]?.coordinates ??
+    [10.7576, 106.0000];
 
   const handleLocate = () => {
     setLocationError("");
@@ -143,17 +141,17 @@ function MapView({
     setIsLocating(true);
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
+      ({ coords }) => {
+        setUserLocation([
+          coords.latitude,
+          coords.longitude,
+        ]);
         setIsLocating(false);
       },
       (error) => {
         const messages = {
-          1: "Bạn chưa cấp quyền vị trí. Hãy cho phép truy cập vị trí trong trình duyệt.",
-          2: "Không xác định được vị trí. Hãy kiểm tra GPS hoặc kết nối mạng.",
+          1: "Bạn chưa cấp quyền truy cập vị trí.",
+          2: "Không xác định được vị trí GPS.",
           3: "Lấy vị trí quá lâu. Vui lòng thử lại.",
         };
 
@@ -166,124 +164,78 @@ function MapView({
       {
         enableHighAccuracy: true,
         timeout: 15000,
-        maximumAge: 0,
+        maximumAge: 30000,
       }
     );
   };
 
   return (
-    <>
+    <div className="map-view">
       <div className="map-toolbar">
-        <div className="zoom-controls">
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            aria-label="Phóng to bản đồ"
-          >
-            +
-          </button>
-
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            aria-label="Thu nhỏ bản đồ"
-          >
-            −
-          </button>
-        </div>
-
         <button
           type="button"
-          className="locate-button"
           onClick={handleLocate}
           disabled={isLocating}
           aria-label="Lấy vị trí hiện tại"
           title="Lấy vị trí hiện tại"
         >
-          {isLocating ? "…" : "◎"}
+          {isLocating ? "Đang định vị..." : "◎ Vị trí của tôi"}
         </button>
       </div>
 
-      <div className="map-stage">
-        <div
-          className="map-world"
-          style={{
-            transform: `scale(${zoom})`,
-          }}
-        >
-          <div className="road road-1" />
-          <div className="road road-2" />
-          <div className="road road-3" />
-          <div className="road road-4" />
+      <MapContainer
+        center={initialCenter}
+        zoom={15}
+        scrollWheelZoom
+        className="leaflet-map"
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-          <span className="map-place place-1">
-            Chợ Xóm Chiếu
-          </span>
+        <FitSelectedPoi coordinates={selectedCoordinates} />
 
-          <span className="map-place place-2">
-            Đường Hoàng Diệu
-          </span>
+        {validPois.map(({ poi, coordinates }) => {
+          const content =
+            poi.content?.[language] ??
+            poi.content?.vi ??
+            {};
 
-          {pois.map((poi) => {
-            const content = poi.content?.[language];
+          const name = content.name ?? poi.name ?? "Địa điểm";
+          const description =
+            content.description ?? poi.description ?? "";
+          const category =
+            content.category ?? poi.categoryKey ?? "";
 
-            // Tránh lỗi nếu POI chưa có nội dung ngôn ngữ này.
-            if (!content || !poi.position) {
-              return null;
-            }
-
-            return (
-              <button
-                type="button"
-                key={poi.id}
-                className={`map-marker ${
-                  selectedPoi?.id === poi.id
-                    ? "active"
-                    : ""
-                }`}
-                style={{
-                  left: `${poi.position.x}%`,
-                  top: `${poi.position.y}%`,
-                }}
-                onClick={() => onSelectPoi(poi)}
-                title={content.name}
-                aria-label={`Chọn ${content.name}`}
-              >
-                {poi.icon}
-              </button>
-            );
-          })}
-
-          {userLocation && (
-            <div className="gps-info">
-              <strong>Vị trí GPS hiện tại</strong>
-
-              <span>
-                {userLocation.latitude.toFixed(5)},{" "}
-                {userLocation.longitude.toFixed(5)}
-              </span>
-            </div>
-          )}
-
-          {userLocation && (
-            <div
-              className="current-position"
-              title="Vị trí GPS hiện tại"
-              aria-label="Vị trí GPS hiện tại"
+          return (
+            <Marker
+              key={poi.id}
+              position={coordinates}
+              eventHandlers={{
+                click: () => onSelectPoi(poi),
+              }}
             >
-              <span />
-            </div>
-          )}
-        </div>
-      </div>
+              <Popup>
+                <strong>{name}</strong>
+                {category && <p>{category}</p>}
+                {description && <p>{description}</p>}
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {userLocation && (
+          <Marker position={userLocation}>
+            <Popup>Vị trí hiện tại của bạn</Popup>
+          </Marker>
+        )}
+      </MapContainer>
 
       {locationError && (
-        <div
-          className="location-error"
-          role="alert"
-        >
+        <p className="location-error" role="alert">
           {locationError}
-        </div>
+        </p>
       )}
 
       {userLocation && (
@@ -292,32 +244,36 @@ function MapView({
 
           {nearbyPois.length > 0 ? (
             <ul>
-              {nearbyPois.map(({ poi, distance }) => (
-                <li key={poi.id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelectPoi(poi)}
-                  >
-                    {poi.content?.[language]?.name ??
-                      "Địa điểm chưa có tên"}
-                    {" — "}
-                    {distance < 1
-                      ? `${Math.round(distance * 1000)} m`
-                      : `${distance.toFixed(2)} km`}
-                  </button>
-                </li>
-              ))}
+              {nearbyPois.map(({ poi, distance }) => {
+                const name =
+                  poi.content?.[language]?.name ??
+                  poi.content?.vi?.name ??
+                  poi.name ??
+                  "Địa điểm";
+
+                return (
+                  <li key={poi.id}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectPoi(poi)}
+                    >
+                      {name}
+                      {" — "}
+                      {distance < 1
+                        ? `${Math.round(distance * 1000)} m`
+                        : `${distance.toFixed(2)} km`}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p>
-              Không tìm thấy POI nào trong bán kính 5 km,
-              hoặc các POI chưa có tọa độ GPS hợp lệ.
+              Không tìm thấy POI có tọa độ hợp lệ trong bán kính 5 km.
             </p>
           )}
         </section>
       )}
-    </>
+    </div>
   );
 }
-
-export default MapView;

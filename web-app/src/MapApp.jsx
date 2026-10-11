@@ -5,7 +5,6 @@ import {
 } from "react";
 
 import "./App.css";
-
 import {
   categories,
   languages,
@@ -95,41 +94,56 @@ function MapApp() {
   // Filter POIs
   // =========================
   const filteredPois = useMemo(() => {
-    const normalizedSearch = searchTerm
-      .trim()
-      .toLowerCase();
+  const normalizedSearch = searchTerm
+    .trim()
+    .toLowerCase();
 
-    return pois.filter((poi) => {
-      const content = poi.content?.[language];
+  return pois.filter((poi) => {
+    // Ưu tiên nội dung theo ngôn ngữ đã chọn.
+    // Nếu thiếu, dùng tiếng Việt rồi mới dùng dữ liệu gốc.
+    const content =
+      poi.content?.[language] ??
+      poi.content?.vi ??
+      {};
 
-      if (!content) {
-        return false;
-      }
+    const name =
+      content.name ?? poi.name ?? "";
 
-      const matchesSearch =
-        !normalizedSearch ||
-        content.name
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        content.category
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        content.description
-          .toLowerCase()
-          .includes(normalizedSearch);
+    const category =
+      content.category ?? poi.categoryKey ?? "";
 
-      const matchesCategory =
-        selectedCategory === "all" ||
-        poi.categoryKey === selectedCategory;
+    const description =
+      content.description ?? poi.description ?? "";
 
-      return matchesSearch && matchesCategory;
-    });
-  }, [
-    pois,
-    language,
-    searchTerm,
-    selectedCategory,
-  ]);
+    const matchesSearch =
+      !normalizedSearch ||
+      String(name)
+        .toLowerCase()
+        .includes(normalizedSearch) ||
+      String(category)
+        .toLowerCase()
+        .includes(normalizedSearch) ||
+      String(description)
+        .toLowerCase()
+        .includes(normalizedSearch);
+
+    const matchesCategory =
+      selectedCategory === "all" ||
+      poi.categoryKey === selectedCategory;
+
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      poi.isActive !== false &&
+      poi.approvalStatus !== "pending"
+    );
+  });
+}, [
+  pois,
+  language,
+  searchTerm,
+  selectedCategory,
+]);
 
   // =========================
   // UC1: Select Language

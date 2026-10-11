@@ -12,34 +12,68 @@ function SelectedPoiPanel({
   }
 
   const content =
-    selectedPoi.content?.[language];
+    selectedPoi.content?.[language] ??
+    selectedPoi.content?.vi ??
+    {};
 
-  if (!content) {
-    return null;
-  }
+  const name =
+    content.name ?? selectedPoi.name ?? "Địa điểm";
+
+  const category =
+    content.category ?? selectedPoi.categoryKey ?? "";
+
+  const description =
+    content.description ?? selectedPoi.description ?? "";
+
+  const selectedLabel =
+    uiLabels?.selectedPlace?.[language] ??
+    uiLabels?.selectedPlace?.vi ??
+    "Địa điểm được chọn";
+
+  const closeLabel =
+    uiLabels?.closePoi?.[language] ??
+    uiLabels?.closePoi?.vi ??
+    "Đóng";
 
   return (
-    <div className="selected-poi">
-      <div className="selected-poi-image">
-        {selectedPoi.icon}
+    <section
+      className="selected-poi"
+      aria-label={selectedLabel}
+    >
+      <div className="selected-poi-image" aria-hidden="true">
+        {selectedPoi.icon ?? "📍"}
       </div>
 
       <div className="selected-poi-info">
-        <span className="selected-label">
-          {uiLabels?.selectedPlace?.[language] ??
-            "Địa điểm được chọn"}
-        </span>
+        <div className="selected-poi-heading">
+          <span className="selected-label">
+            {selectedLabel}
+          </span>
 
-        <h3>{content.name}</h3>
+          <button
+            type="button"
+            className="close-poi-button"
+            onClick={onClose}
+            aria-label={closeLabel}
+            title={closeLabel}
+          >
+            ×
+          </button>
+        </div>
 
-        <p>
-          {selectedPoi.distance}m ·{" "}
-          {content.category}
-        </p>
+        <h3>{name}</h3>
 
-        <p className="selected-description">
-          {content.description}
-        </p>
+        {category && (
+          <p className="selected-category">
+            {category}
+          </p>
+        )}
+
+        {description && (
+          <p className="selected-description">
+            {description}
+          </p>
+        )}
 
         <div className="selected-poi-actions">
           <AudioPlayer
@@ -48,18 +82,9 @@ function SelectedPoiPanel({
             language={language}
             speechLanguage={speechLanguage}
           />
-
-          <button
-            type="button"
-            className="close-poi-button"
-            onClick={onClose}
-          >
-            {uiLabels?.closePoi?.[language] ??
-              "Đóng"}
-          </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 

@@ -4,6 +4,7 @@ import OwnerRegisterPage from "./pages/OwnerRegisterPage";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
 import OwnerPage from "./pages/OwnerPage";
+import "./App.css";
 
 function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";

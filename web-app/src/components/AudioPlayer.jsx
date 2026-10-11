@@ -1,26 +1,22 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
 
-import { uiLabels } from "../data/mockPois";
+import { useEffect, useState } from "react";
 
-function AudioPlayer({
-  poi,
-  language,
-  speechLanguage,
-}) {
-  const [status, setStatus] = useState("idle");
+function AudioPlayer({ poi, language, speechLanguage }) {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechError, setSpeechError] = useState("");
 
-  const currentIndexRef = useRef(0);
-  const isStoppingRef = useRef(false);
+  const content =
+    poi?.content?.[language] ??
+    poi?.content?.vi ??
+    {};
 
-  const content = poi?.content?.[language];
+  const name = content.name ?? poi?.name ?? "";
+  const description =
+    content.description ?? poi?.description ?? "";
 
-  const narrationText =
-    content?.speechText ||
-    content?.description;
+  const textToSpeak = [name, description]
+    .filter(Boolean)
+    .join(". ");
 
   useEffect(() => {
     return () => {
@@ -28,191 +24,68 @@ function AudioPlayer({
     };
   }, []);
 
-  if (!poi || !content) {
-    return null;
-  }
-
-  const speakFrom = (startIndex = 0) => {
+  const handlePlay = () => {
     if (!("speechSynthesis" in window)) {
-      setStatus("unsupported");
+      setSpeechError("Trình duyệt không hỗ trợ thuyết minh.");
       return;
     }
 
-    if (!narrationText) {
-      setStatus("error");
-      return;
-    }
-
-    const remainingText =
-      narrationText.slice(startIndex);
-
-    if (!remainingText.trim()) {
-      currentIndexRef.current = 0;
-      setStatus("finished");
+    if (!textToSpeak.trim()) {
+      setSpeechError("Địa điểm chưa có nội dung thuyết minh.");
       return;
     }
 
     window.speechSynthesis.cancel();
+    setSpeechError("");
 
-    isStoppingRef.current = false;
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = speechLanguage || "vi-VN";
+    utterance.rate = 0.9;
 
-    const utterance =
-      new SpeechSynthesisUtterance(
-        remainingText
-      );
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
 
-    utterance.lang = speechLanguage;
+    utterance.onerror = (event) => {
+      setIsSpeaking(false);
 
-    utterance.onstart = () => {
-      if (!isStoppingRef.current) {
-        setStatus("playing");
+      if (
+        event.error !== "canceled" &&
+        event.error !== "interrupted"
+      ) {
+        setSpeechError("Không thể phát thuyết minh. Vui lòng thử lại.");
       }
-    };
-
-    utterance.onboundary = (event) => {
-      currentIndexRef.current =
-        startIndex + event.charIndex;
-    };
-
-    utterance.onend = () => {
-      if (isStoppingRef.current) {
-        return;
-      }
-
-      currentIndexRef.current = 0;
-      setStatus("finished");
-    };
-
-    utterance.onerror = () => {
-      if (isStoppingRef.current) {
-        return;
-      }
-
-      setStatus("error");
     };
 
     window.speechSynthesis.speak(utterance);
   };
 
-  const speak = () => {
-    currentIndexRef.current = 0;
-    speakFrom(0);
+  const handleStop = () => {
+    window.speechSynthesis?.cancel();
+    setIsSpeaking(false);
+    setSpeechError("");
   };
-
-  const pause = () => {
-    if (status !== "playing") {
-      return;
-    }
-
-    isStoppingRef.current = true;
-
-    window.speechSynthesis.cancel();
-
-    setStatus("paused");
-  };
-
-  const resume = () => {
-    if (status !== "paused") {
-      return;
-    }
-
-    speakFrom(currentIndexRef.current);
-  };
-
-  const stop = () => {
-    isStoppingRef.current = true;
-
-    window.speechSynthesis.cancel();
-
-    currentIndexRef.current = 0;
-
-    setStatus("idle");
-  };
-
-  const handleMainButton = () => {
-    if (status === "playing") {
-      pause();
-      return;
-    }
-
-    if (status === "paused") {
-      resume();
-      return;
-    }
-
-    speak();
-  };
-
-  // =========================
-  // Trạng thái ban đầu
-  // =========================
-  if (status === "idle") {
-    return (
-      <button
-        type="button"
-        className="listen-button"
-        onClick={speak}
-      >
-        {uiLabels.listenAudio[language]}
-      </button>
-    );
-  }
-
-  let statusText =
-    uiLabels.audio.playing[language];
-
-  if (status === "paused") {
-    statusText =
-      uiLabels.audio.paused[language];
-  }
-
-  if (status === "finished") {
-    statusText =
-      uiLabels.audio.finished[language];
-  }
-
-  if (status === "unsupported") {
-    statusText =
-      uiLabels.audio.unsupported[language];
-  }
-
-  if (status === "error") {
-    statusText =
-      uiLabels.audio.error[language];
-  }
 
   return (
-    <div className="audio-controls">
+    <div className="audio-player">
       <button
         type="button"
-        className="audio-main-button"
-        onClick={handleMainButton}
+        className="audio-player-button"
+        onClick={isSpeaking ? handleStop : handlePlay}
+        disabled={!textToSpeak.trim()}
         aria-label={
-          status === "playing"
-            ? uiLabels.audio.paused[language]
-            : status === "paused"
-              ? uiLabels.audio.playing[language]
-              : uiLabels.listenAudio[language]
+          isSpeaking ? "Dừng thuyết minh" : "Nghe thuyết minh"
         }
       >
-        {status === "playing"
-          ? "❚❚"
-          : status === "finished"
-            ? "↻"
-            : "▶"}
+        {isSpeaking
+          ? "⏹ Dừng thuyết minh"
+          : "🔊 Nghe thuyết minh"}
       </button>
 
-      <button
-        type="button"
-        className="audio-exit-button"
-        onClick={stop}
-      >
-        {uiLabels.audio.exit[language]}
-      </button>
-
-      <span className="audio-status">
-        {statusText}
-      </span>
+      {speechError && (
+        <p className="audio-player-error" role="alert">
+          {speechError}
+        </p>
+      )}
     </div>
   );
 }
