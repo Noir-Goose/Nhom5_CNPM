@@ -4,7 +4,8 @@ const API_BASE_URL = (
 ).replace(/\/$/, "");
 
 export async function loadPois(language = "vi") {
-  const url = `${API_BASE_URL}/api/v1/poi/load-all?lang=${encodeURIComponent(language)}`;
+  const url =
+    `${API_BASE_URL}/api/v1/poi/load-all?lang=${encodeURIComponent(language)}`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -22,7 +23,9 @@ export async function loadPois(language = "vi") {
   const data = await response.json();
 
   if (!Array.isArray(data)) {
-    throw new Error("API không trả về danh sách POI hợp lệ.");
+    throw new Error(
+      "API không trả về danh sách POI hợp lệ."
+    );
   }
 
   return data;
