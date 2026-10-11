@@ -3,7 +3,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
-
+from app.poi.router import router as poi_owner_router
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -91,7 +91,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
-
+app.include_router(poi_owner_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_ORIGINS,
