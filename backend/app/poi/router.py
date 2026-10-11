@@ -16,6 +16,28 @@ router = APIRouter(
 )
 
 
+class POILanguageContent(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str = Field(min_length=1, max_length=3000)
+    category: str = Field(min_length=1, max_length=100)
+
+    @field_validator("name", "description", "category")
+    @classmethod
+    def reject_blank_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("This field cannot be blank")
+        return value
+
+
+class POIMultilingualContent(BaseModel):
+    vi: POILanguageContent
+    en: POILanguageContent
+    zh: POILanguageContent
+    ja: POILanguageContent
+    ko: POILanguageContent
+
+
 class POISubmissionRequest(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     categoryKey: str = Field(min_length=1, max_length=100)
@@ -23,6 +45,7 @@ class POISubmissionRequest(BaseModel):
     description: str = Field(min_length=1, max_length=3000)
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
+    content: POIMultilingualContent
 
     @field_validator("name", "categoryKey", "address", "description")
     @classmethod
@@ -62,6 +85,7 @@ def submit_poi(
         "description": payload.description,
         "latitude": payload.latitude,
         "longitude": payload.longitude,
+        "content": payload.content.model_dump(),
         "createdBy": owner["_id"],
         "ownerEmail": owner.get("email", ""),
         "status": "pending",
@@ -82,4 +106,3 @@ def submit_poi(
         "submissionId": submission["submissionId"],
         "status": submission["status"],
     }
-
