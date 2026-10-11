@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request, status
 from pymongo.database import Database
 from pymongo.errors import PyMongoError
-
+from app.auth.security import create_access_token, verify_password
 from app.auth.schemas import (
+    LoginRequest,
     OwnerRegistrationRequest,
     ResendOtpRequest,
     VerifyOtpRequest,
@@ -105,3 +106,61 @@ def resend_owner_otp(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Could not process OTP request",
         ) from error
+
+@router.post("/login")
+def login(payload: LoginRequest, request: Request):
+    database = get_database(request)
+    email = str(payload.email).strip().lower()
+
+    try:
+        user = database["users"].find_one({"email": email})
+    except PyMongoError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not process login",
+        ) from error
+
+    # Không tiết lộ email có tồn tại hay không.
+    if user is None or not verify_password(
+        payload.password,
+        user.get("passwordHash", ""),
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
+
+    role = user.get("role")
+    if role not in {"admin", "poi_owner"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account role is not allowed to log in",
+        )
+
+    if not user.get("emailVerified", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email first",
+        )
+
+    if role == "poi_owner" and user.get("approvalStatus") != "approved":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is awaiting Admin approval",
+        )
+
+    token = create_access_token(
+        user_id=str(user["_id"]),
+        role=role,
+    )
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(user["_id"]),
+            "fullName": user.get("fullName", ""),
+            "email": email,
+            "role": role,
+        },
+    }

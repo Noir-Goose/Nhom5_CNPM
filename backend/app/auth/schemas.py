@@ -40,3 +40,12 @@ class VerifyOtpRequest(BaseModel):
 
 class ResendOtpRequest(BaseModel):
     email: EmailStr
+
+class LoginRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    email: EmailStr
+    password: Annotated[
+        str,
+        StringConstraints(min_length=1, max_length=128),
+    ]
