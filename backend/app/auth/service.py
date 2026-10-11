@@ -2,8 +2,7 @@ import hashlib
 import hmac
 import os
 import secrets
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import UTC, datetime, timedelta
 
 from dotenv import load_dotenv
 from pymongo import ASCENDING
@@ -13,6 +12,18 @@ from pymongo.errors import DuplicateKeyError
 from app.auth.email_service import send_otp_email
 from app.auth.schemas import OwnerRegistrationRequest, VerifyOtpRequest
 from app.auth.security import hash_password
+
+
+def _ensure_utc(value: datetime | None) -> datetime | None:
+    """Normalize a datetime value to timezone-aware UTC."""
+    if value is None:
+        return None
+
+    if value.tzinfo is None:
+        # MongoDB may return naive datetimes representing UTC.
+        return value.replace(tzinfo=UTC)
+
+    return value.astimezone(UTC)
 
 BACKEND_DIR = __import__("pathlib").Path(__file__).resolve().parents[2]
 load_dotenv(BACKEND_DIR / ".env")
@@ -29,7 +40,7 @@ def _hash_otp(email: str, otp: str) -> str:
     if not OTP_SECRET:
         raise RuntimeError("JWT_SECRET_KEY is not configured")
 
-    message = f"{email.lower()}:{otp}".encode("utf-8")
+    message = f"{email.lower()}:{otp}".encode()
     return hmac.new(
         OTP_SECRET.encode("utf-8"),
         message,
@@ -65,10 +76,10 @@ def start_registration(
 
     existing = verifications.find_one({"email": email})
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if existing:
-        last_sent = existing.get("lastSentAt")
+        last_sent = _ensure_utc(existing.get("lastSentAt"))
         if last_sent and (now - last_sent).total_seconds() < OTP_RESEND_COOLDOWN_SECONDS:
             raise ValueError("Please wait before requesting another OTP")
 
@@ -120,17 +131,18 @@ def verify_registration(
     verifications = database["email_verifications"]
     users = database["users"]
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     record = verifications.find_one({"email": email})
 
     if not record or record.get("used"):
         raise ValueError("No active verification request was found")
 
-    if record["expiresAt"].replace(tzinfo=timezone.utc) <= now:
+    expires_at = _ensure_utc(record["expiresAt"])
+
+    if expires_at is None or expires_at <= now:
         verifications.delete_one({"email": email})
         raise ValueError("The verification code has expired")
-
 
     if record.get("attempts", 0) >= OTP_MAX_ATTEMPTS:
         verifications.delete_one({"email": email})
@@ -190,8 +202,8 @@ def resend_registration_otp(
             "No active registration found. Please register again."
         )
 
-    now = datetime.now(timezone.utc)
-    last_sent = record.get("lastSentAt")
+    now = datetime.now(UTC)
+    last_sent = _ensure_utc(record.get("lastSentAt"))
 
     if last_sent and (
         now - last_sent

@@ -4,13 +4,13 @@ from pymongo.errors import PyMongoError
 
 from app.auth.schemas import (
     OwnerRegistrationRequest,
-    VerifyOtpRequest,
     ResendOtpRequest,
+    VerifyOtpRequest,
 )
 from app.auth.service import (
+    resend_registration_otp,
     start_registration,
     verify_registration,
-    resend_registration_otp,
 )
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])

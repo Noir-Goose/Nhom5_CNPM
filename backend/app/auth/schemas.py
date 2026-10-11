@@ -1,8 +1,6 @@
-import re
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
-
+from pydantic import BaseModel, ConfigDict, EmailStr, StringConstraints
 
 FullName = Annotated[
     str,

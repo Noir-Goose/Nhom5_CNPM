@@ -6,10 +6,11 @@ from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
-from app.auth.router import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
+
+from app.auth.router import router as auth_router
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_DIR / ".env")
@@ -43,7 +44,7 @@ def seed_initial_pois() -> None:
         initial_pois = json.load(seed_file)
 
     if not isinstance(initial_pois, list):
-        raise RuntimeError("initial_pois.json must contain a JSON array")
+        raise TypeError("initial_pois.json must contain a JSON array")
 
     if initial_pois:
         pois_collection.insert_many(initial_pois)
@@ -80,7 +81,6 @@ async def lifespan(app: FastAPI):
             client.close()
         client = None
         database = None
-        from fastapi import FastAPI, HTTPException, Query
 
 
 app = FastAPI(
