@@ -84,6 +84,20 @@ function FitSelectedPoi({ coordinates }) {
   return null;
 }
 
+function FocusUserLocation({ coordinates }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (coordinates) {
+      map.flyTo(coordinates, 16, {
+        duration: 0.8,
+      });
+    }
+  }, [coordinates, map]);
+
+  return null;
+}
+
 export default function MapView({
   pois = [],
   selectedPoi,
@@ -195,6 +209,7 @@ export default function MapView({
         />
 
         <FitSelectedPoi coordinates={selectedCoordinates} />
+        <FocusUserLocation coordinates={userLocation} />
 
         {validPois.map(({ poi, coordinates }) => {
           const content =

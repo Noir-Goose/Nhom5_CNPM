@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
+from app.admin.router import router as admin_router
 from app.auth.router import router as auth_router
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -92,6 +93,7 @@ app = FastAPI(
 
 app.include_router(auth_router)
 app.include_router(poi_owner_router)
+app.include_router(admin_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_ORIGINS,
