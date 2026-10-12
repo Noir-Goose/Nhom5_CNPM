@@ -655,3 +655,25 @@
 .poi-location-picker > div {
   width: 100%;
 }
+.registration-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.registration-filters button {
+  padding: 8px 14px;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+}
+
+.registration-filters button.active {
+  background: #e8f2ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+  font-weight: 600;
+}
