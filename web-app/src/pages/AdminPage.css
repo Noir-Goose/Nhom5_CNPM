@@ -368,3 +368,290 @@
     min-height: 52px;
   }
 }
+.poi-edit-panel {
+  margin-top: 20px;
+  padding: 24px;
+  border: 1px solid #e8ecf2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.poi-edit-heading {
+  margin-bottom: 22px;
+}
+
+.poi-edit-heading h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.poi-edit-heading p {
+  margin: 0;
+  color: #7c8799;
+  line-height: 1.6;
+}
+
+.poi-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.poi-edit-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.poi-edit-full {
+  grid-column: 1 / -1;
+}
+
+.poi-edit-grid input,
+.poi-edit-grid select,
+.poi-edit-grid textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #243047;
+  font: inherit;
+  font-weight: 400;
+}
+
+.poi-edit-grid input:focus,
+.poi-edit-grid select:focus,
+.poi-edit-grid textarea:focus {
+  outline: 2px solid #c7d9ff;
+  border-color: #4778df;
+}
+
+.poi-edit-grid textarea {
+  resize: vertical;
+}
+
+.poi-language-editor {
+  margin-top: 28px;
+}
+
+.poi-language-editor h4 {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+
+.poi-language-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.poi-language-tabs button {
+  padding: 9px 13px;
+  border: 1px solid #e0e5ed;
+  border-radius: 8px;
+  background: #fff;
+  color: #596579;
+  cursor: pointer;
+  font: inherit;
+}
+
+.poi-language-tabs button.active {
+  border-color: #e76b32;
+  background: #fff0e5;
+  color: #c65c27;
+  font-weight: 700;
+}
+
+.poi-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.poi-edit-actions button {
+  min-height: 40px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.poi-edit-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.poi-cancel-edit {
+  border: 1px solid #e0e5ed;
+  background: #fff;
+  color: #596579;
+}
+
+@media (max-width: 640px) {
+  .poi-edit-panel {
+    padding: 16px;
+  }
+
+  .poi-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .poi-edit-full {
+    grid-column: auto;
+  }
+}
+.poi-status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.poi-status-filters button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #e0e5ed;
+  border-radius: 10px;
+  background: #fff;
+  color: #596579;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s,
+    transform 0.2s;
+}
+
+.poi-status-filters button:hover {
+  border-color: #f0b18d;
+  background: #fff8f3;
+  color: #c65c27;
+}
+
+.poi-status-filters button.active {
+  border-color: #e76b32;
+  background: #fff0e5;
+  color: #c65c27;
+  box-shadow: 0 2px 6px rgb(198 92 39 / 10%);
+}
+
+.poi-status-filters button:focus-visible,
+.poi-tabs button:focus-visible,
+.admin-row-actions button:focus-visible {
+  outline: 3px solid rgb(59 130 246 / 35%);
+  outline-offset: 2px;
+}
+
+/* Hai tab chính */
+.poi-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.poi-tabs button {
+  padding: 11px 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #667085;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.poi-tabs button:hover {
+  background: #f8f9fc;
+  color: #344054;
+}
+
+.poi-tabs button.active {
+  border-color: #f6d4c0;
+  background: #fff0e5;
+  color: #c65c27;
+}
+
+/* Nút thao tác trong bảng */
+.admin-row-actions {
+  align-items: center;
+}
+
+.admin-row-actions button {
+  padding: 9px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-row-actions .admin-approve:hover {
+  border-color: #83cda2;
+  background: #d8f4e2;
+}
+
+.admin-row-actions .admin-reject:hover {
+  border-color: #e9a2a2;
+  background: #ffe1e1;
+}
+
+.admin-row-actions button:active,
+.poi-status-filters button:active,
+.poi-tabs button:active {
+  transform: translateY(1px);
+}
+
+.admin-refresh {
+  transition: all 0.2s ease;
+}
+
+.admin-refresh:hover:not(:disabled) {
+  border-color: #e76b32;
+  background: #fff8f3;
+  color: #c65c27;
+}
+
+/* Trạng thái trong bảng */
+.admin-status.approved {
+  background: #eaf8ef;
+  color: #187443;
+}
+
+.admin-status.revision_requested {
+  background: #fff4d6;
+  color: #946200;
+}
+.poi-location-picker {
+  margin-top: 20px;
+}
+
+.poi-location-picker h4 {
+  margin: 0 0 8px;
+  color: #243047;
+  font-size: 16px;
+}
+
+.poi-location-picker > p {
+  margin: 0 0 14px;
+  color: #7c8799;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.poi-location-picker > div {
+  width: 100%;
+}

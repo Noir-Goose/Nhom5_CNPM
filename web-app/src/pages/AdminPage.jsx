@@ -6,10 +6,27 @@ import {
   deleteRejectedPoiOwnerRegistration,
 } from "../services/adminService";
 import "./AdminPage.css";
+import AdminPoiManagement from "./AdminPoiManagement";
 
 const menuItems = [
-  { id: "pending", icon: "⏳", label: "Chờ duyệt" },
-  { id: "rejected", icon: "📋", label: "Đã từ chối" },
+  {
+    id: "pending",
+    icon: "⏳",
+    label: "Chờ duyệt",
+    group: "registration",
+  },
+  {
+    id: "rejected",
+    icon: "📋",
+    label: "Đã từ chối",
+    group: "registration",
+  },
+  {
+    id: "poi-management",
+    icon: "📍",
+    label: "Quản lý POI",
+    group: "poi",
+  },
 ];
 
 function AdminPage() {
@@ -20,25 +37,31 @@ function AdminPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const loadRegistrations = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
+const loadRegistrations = useCallback(async () => {
+  if (activeMenu === "poi-management") return;
 
-    try {
-      const data = await getPoiOwnerRegistrations(activeMenu);
-      setRegistrations(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(
-        err.message || "Không thể tải danh sách đăng ký.",
-      );
-      setRegistrations([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeMenu]);
+  setIsLoading(true);
+  setError("");
+
+  try {
+    const data = await getPoiOwnerRegistrations(activeMenu);
+    setRegistrations(Array.isArray(data) ? data : []);
+  } catch (err) {
+    setError(
+      err.message || "Không thể tải danh sách đăng ký.",
+    );
+    setRegistrations([]);
+  } finally {
+    setIsLoading(false);
+  }
+}, [activeMenu]);
 
 
   useEffect(() => {
+    if (activeMenu === "poi-management") {
+      return;
+    }
+
     let cancelled = false;
 
     async function fetchRegistrations() {
@@ -187,6 +210,10 @@ function AdminPage() {
         </header>
 
         <main className="admin-content">
+          {activeMenu === "poi-management" ? (
+              <AdminPoiManagement />
+            ) : (
+              <>
           <section className="admin-heading">
             <div>
               <span className="admin-eyebrow">
@@ -366,6 +393,8 @@ function AdminPage() {
               </div>
             )}
           </section>
+            </>
+          )}
         </main>
       </div>
     </div>
