@@ -1,4 +1,4 @@
-
+import NotificationPanel from "../components/owner/notifications/NotificationPanel";
 import { useState } from "react";
 import {
   submitPoiRequest,
@@ -11,7 +11,7 @@ import "./OwnerPage.css";
 const menuItems = [
   { id: "uc7", icon: "📍", label: "Đăng ký địa điểm" },
   { id: "uc8", icon: "📋", label: "Trạng thái yêu cầu" },
-  { id: "uc9", icon: "🗂️", label: "Chức năng 3" },
+  { id: "uc9", icon: "🔔", label: "Thông báo" },
 ];
 
 const contentLanguages = [
@@ -626,24 +626,26 @@ function OwnerPage() {
               key={statusRefreshKey}
               onEditSubmission={handleEditSubmission}
             />
-          ) : (
-            <section className="owner-card owner-coming-soon">
-              <h1>{selectedMenu.label}</h1>
+          ) : activeMenu === "uc9" ? (
+                  <NotificationPanel />
+                ) : (
+                  <section className="owner-card owner-coming-soon">
+                    <h1>{selectedMenu.label}</h1>
 
-              <p>
-                Chức năng này sẽ được phát triển sau khi xác định
-                yêu cầu nghiệp vụ tương ứng.
-              </p>
+                    <p>
+                      Chức năng này sẽ được phát triển sau khi xác định
+                      yêu cầu nghiệp vụ tương ứng.
+                    </p>
 
-              <button
-                className="owner-submit"
-                type="button"
-                onClick={() => setActiveMenu("uc7")}
-              >
-                Quay lại UC7
-              </button>
-            </section>
-          )}
+                    <button
+                      className="owner-submit"
+                      type="button"
+                      onClick={() => setActiveMenu("uc7")}
+                    >
+                      Quay lại UC7
+                    </button>
+                  </section>
+                )}
         </main>
       </div>
     </div>

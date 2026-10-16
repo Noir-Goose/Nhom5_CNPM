@@ -10,6 +10,7 @@ from pymongo.database import Database
 from pymongo.errors import PyMongoError
 
 from app.auth.admin_dependencies import get_current_admin
+from app.notifications.service import create_owner_notification
 
 router = APIRouter(
     prefix="/api/v1/admin",
@@ -73,6 +74,36 @@ class AdminPoiMessage(BaseModel):
         return value
 
 
+def notify_owner_safely(
+    database: Database,
+    *,
+    owner_id: ObjectId | str,
+    event_type: str,
+    title: str,
+    message: str,
+    poi_id: str | None = None,
+    submission_id: str | None = None,
+) -> None:
+    """Try to save a notification without misreporting a completed admin action."""
+    try:
+        create_owner_notification(
+            database,
+            owner_id=owner_id,
+            event_type=event_type,
+            title=title,
+            message=message,
+            poi_id=poi_id,
+            submission_id=submission_id,
+        )
+    except (PyMongoError, ValueError) as error:
+        # The status change has already succeeded. Log the notification failure
+        # so it can be investigated instead of returning a misleading action error.
+        print(
+            "Failed to create owner notification "
+            f"({event_type}, submission={submission_id}, poi={poi_id}): {error}"
+        )
+
+
 @router.get("/poi-submissions")
 def list_poi_submissions(
     request: Request,
@@ -86,7 +117,6 @@ def list_poi_submissions(
     """UC11: Danh sách POI Owner gửi theo trạng thái."""
     database = get_database(request)
 
-    # Hỗ trợ cả trạng thái mới và dữ liệu cũ trong MongoDB.
     status_aliases = {
         "reject": ["reject", "rejected"],
         "rejected": ["reject", "rejected"],
@@ -135,6 +165,13 @@ def approve_poi_submission(
 
         now = datetime.now(UTC)
         existing_poi_id = submission.get("poiId")
+        owner_id = submission.get("createdBy")
+
+        if not isinstance(owner_id, ObjectId):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Submission has no valid POI Owner",
+            )
 
         poi_data = {
             "name": submission.get("name", ""),
@@ -151,7 +188,6 @@ def approve_poi_submission(
         }
 
         if existing_poi_id:
-            # POI đã tồn tại: cập nhật bản ghi cũ, không tạo bản ghi mới.
             result = pois.update_one(
                 {"id": existing_poi_id},
                 {"$set": poi_data},
@@ -164,19 +200,15 @@ def approve_poi_submission(
                 )
 
             poi_id = existing_poi_id
-
         else:
-            # POI lần đầu được duyệt: tạo bản ghi mới.
             poi_id = f"poi-{uuid4().hex}"
-
             poi = {
                 "id": poi_id,
                 "submissionId": submission_id,
-                "ownerId": str(submission["createdBy"]),
+                "ownerId": str(owner_id),
                 "createdAt": now,
                 **poi_data,
             }
-
             inserted = pois.insert_one(poi)
             inserted_id = inserted.inserted_id
 
@@ -204,6 +236,16 @@ def approve_poi_submission(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Submission status changed. Refresh and retry.",
             )
+
+        notify_owner_safely(
+            database,
+            owner_id=owner_id,
+            event_type="poi_approved",
+            title="POI đã được duyệt",
+            message="Địa điểm của bạn đã được duyệt và có thể hiển thị trên bản đồ.",
+            poi_id=poi_id,
+            submission_id=submission_id,
+        )
 
         return {
             "message": "POI approved",
@@ -236,12 +278,31 @@ def reject_poi_submission(
 ):
     """UC11: Từ chối POI và lưu lời nhắn cho POI Owner."""
     database = get_database(request)
+    submissions = database["poi_submissions"]
     now = datetime.now(UTC)
 
     try:
-        result = database["poi_submissions"].update_one(
+        submission = submissions.find_one({
+            "submissionId": submission_id,
+            "status": "pending",
+        })
+
+        if submission is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Pending POI submission not found",
+            )
+
+        owner_id = submission.get("createdBy")
+        if not isinstance(owner_id, ObjectId):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Submission has no valid POI Owner",
+            )
+
+        result = submissions.update_one(
             {
-                "submissionId": submission_id,
+                "_id": submission["_id"],
                 "status": "pending",
             },
             {
@@ -256,9 +317,19 @@ def reject_poi_submission(
 
         if result.modified_count != 1:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Pending POI submission not found",
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Submission status changed. Refresh and retry.",
             )
+
+        notify_owner_safely(
+            database,
+            owner_id=owner_id,
+            event_type="poi_rejected",
+            title="POI chưa được duyệt",
+            message=payload.message,
+            poi_id=submission.get("poiId"),
+            submission_id=submission_id,
+        )
 
         return {
             "message": "POI rejected",
@@ -363,12 +434,13 @@ def request_poi_revision(
                 detail="This POI has no valid owner submission link",
             )
 
+        owner_object_id = ObjectId(owner_id)
         now = datetime.now(UTC)
 
         result = database["poi_submissions"].update_one(
             {
                 "submissionId": submission_id,
-                "createdBy": ObjectId(owner_id),
+                "createdBy": owner_object_id,
                 "status": "approved",
             },
             {
@@ -395,6 +467,16 @@ def request_poi_revision(
                     "updatedAt": now,
                 }
             },
+        )
+
+        notify_owner_safely(
+            database,
+            owner_id=owner_object_id,
+            event_type="revision_requested",
+            title="POI cần được chỉnh sửa",
+            message=payload.message,
+            poi_id=poi_id,
+            submission_id=submission_id,
         )
 
         return {
