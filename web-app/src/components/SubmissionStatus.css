@@ -1,3 +1,4 @@
+
 .submission-status {
   width: 100%;
   color: #243047;
@@ -98,12 +99,24 @@
   color: #991b1b;
 }
 
+.submission-status-badge.revision-requested {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
 .submission-status-badge.unknown {
   background: #edf2f7;
   color: #475569;
 }
 
-.submission-detail-button {
+.submission-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.submission-detail-button,
+.submission-edit-button {
   padding: 9px 13px;
   border: 1px solid #d6deeb;
   border-radius: 8px;
@@ -117,6 +130,22 @@
 
 .submission-detail-button:hover {
   background: #f1f5f9;
+}
+
+.submission-edit-button {
+  border-color: #24543a;
+  background: #24543a;
+  color: #fff;
+}
+
+.submission-edit-button:hover {
+  background: #183b2d;
+}
+
+.submission-detail-button:disabled,
+.submission-edit-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .submission-empty {
@@ -221,9 +250,20 @@
   text-align: right;
 }
 
+.submission-edit-notice {
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .submission-modal-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 8px;
   padding: 16px 24px 24px;
 }
 
@@ -243,5 +283,9 @@
 
   .submission-detail-row strong {
     text-align: left;
+  }
+
+  .submission-modal-footer > button {
+    flex: 1;
   }
 }

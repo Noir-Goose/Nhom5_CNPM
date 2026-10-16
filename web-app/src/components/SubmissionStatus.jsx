@@ -3,16 +3,27 @@ import { getMyPoiSubmissions } from "../services/authService";
 import "./SubmissionStatus.css";
 
 const STATUS_LABELS = {
-  pending: "Đang chờ duyệt",
+  pending: "Chưa duyệt",
   approved: "Đã duyệt",
+  reject: "Bị từ chối",
   rejected: "Bị từ chối",
+  fixRequest: "Yêu cầu chỉnh sửa",
+  revision_requested: "Yêu cầu chỉnh sửa",
 };
 
 const STATUS_CLASSES = {
   pending: "pending",
   approved: "approved",
+  reject: "rejected",
   rejected: "rejected",
+  fixRequest: "revision-requested",
+  revision_requested: "revision-requested",
 };
+
+const EDITABLE_STATUSES = new Set([
+  "fixRequest",
+  "revision_requested",
+]);
 
 function formatDate(value) {
   if (!value) return "Chưa có thông tin";
@@ -26,7 +37,9 @@ function formatDate(value) {
   return date.toLocaleString("vi-VN");
 }
 
-export default function SubmissionStatus() {
+export default function SubmissionStatus({
+  onEditSubmission,
+}) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -93,7 +106,7 @@ export default function SubmissionStatus() {
           <h1>Trạng thái yêu cầu</h1>
           <p>
             Theo dõi các địa điểm bạn đã gửi đăng ký.
-            Chọn một yêu cầu để xem thông tin chi tiết.
+            Chọn một yêu cầu để xem phản hồi từ Admin.
           </p>
         </div>
 
@@ -119,7 +132,7 @@ export default function SubmissionStatus() {
                 <th>Danh mục</th>
                 <th>Ngày gửi</th>
                 <th>Trạng thái</th>
-                <th>Chi tiết</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
 
@@ -150,13 +163,30 @@ export default function SubmissionStatus() {
                   </td>
 
                   <td>
-                    <button
-                      type="button"
-                      className="submission-detail-button"
-                      onClick={() => setSelectedSubmission(item)}
-                    >
-                      Xem chi tiết
-                    </button>
+                    <div className="submission-actions">
+                      <button
+                        type="button"
+                        className="submission-detail-button"
+                        onClick={() =>
+                          setSelectedSubmission(item)
+                        }
+                      >
+                        Chi tiết
+                      </button>
+
+                      {EDITABLE_STATUSES.has(item.status) && (
+                        <button
+                          type="button"
+                          className="submission-edit-button"
+                          disabled={!onEditSubmission}
+                          onClick={() =>
+                            onEditSubmission?.(item)
+                          }
+                        >
+                          Chỉnh sửa
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -181,7 +211,8 @@ export default function SubmissionStatus() {
               <div>
                 <p>CHI TIẾT YÊU CẦU</p>
                 <h2 id="submission-detail-title">
-                  {selectedSubmission.name || "Địa điểm chưa có tên"}
+                  {selectedSubmission.name ||
+                    "Địa điểm chưa có tên"}
                 </h2>
               </div>
 
@@ -239,9 +270,41 @@ export default function SubmissionStatus() {
                     "Chưa xác định"}
                 </strong>
               </div>
+
+              <div className="submission-detail-row">
+                <span>Phản hồi từ Admin</span>
+                <strong>
+                  {selectedSubmission.adminMessage ||
+                    "Admin chưa có phản hồi."}
+                </strong>
+              </div>
+
+              {EDITABLE_STATUSES.has(
+                selectedSubmission.status
+              ) && (
+                <p className="submission-edit-notice">
+                  Yêu cầu này cần được chỉnh sửa trước khi gửi lại.
+                </p>
+              )}
             </div>
 
             <div className="submission-modal-footer">
+              {EDITABLE_STATUSES.has(
+                selectedSubmission.status
+              ) && (
+                <button
+                  type="button"
+                  className="submission-edit-button"
+                  disabled={!onEditSubmission}
+                  onClick={() => {
+                    onEditSubmission?.(selectedSubmission);
+                    setSelectedSubmission(null);
+                  }}
+                >
+                  Chỉnh sửa yêu cầu
+                </button>
+              )}
+
               <button
                 type="button"
                 className="submission-detail-button"

@@ -79,17 +79,26 @@ def list_poi_submissions(
     status_filter: str = Query(
         default="pending",
         alias="status",
-        pattern="^(pending|approved|rejected|revision_requested)$",
+        pattern="^(pending|approved|reject|rejected|fixRequest|revision_requested)$",
     ),
     admin: dict[str, Any] = Depends(get_current_admin),
 ):
     """UC11: Danh sách POI Owner gửi theo trạng thái."""
     database = get_database(request)
 
+    # Hỗ trợ cả trạng thái mới và dữ liệu cũ trong MongoDB.
+    status_aliases = {
+        "reject": ["reject", "rejected"],
+        "rejected": ["reject", "rejected"],
+        "fixRequest": ["fixRequest", "revision_requested"],
+        "revision_requested": ["fixRequest", "revision_requested"],
+    }
+    statuses = status_aliases.get(status_filter, [status_filter])
+
     try:
         documents = list(
             database["poi_submissions"]
-            .find({"status": status_filter})
+            .find({"status": {"$in": statuses}})
             .sort("createdAt", -1)
         )
         return [serialize_document(item) for item in documents]
@@ -106,7 +115,7 @@ def approve_poi_submission(
     request: Request,
     admin: dict[str, Any] = Depends(get_current_admin),
 ):
-    """UC11: Duyệt POI và tạo bản ghi trong collection pois."""
+    """UC11: Duyệt POI mới hoặc duyệt lại POI đã được chỉnh sửa."""
     database = get_database(request)
     submissions = database["poi_submissions"]
     pois = database["pois"]
@@ -125,12 +134,9 @@ def approve_poi_submission(
             )
 
         now = datetime.now(UTC)
-        poi_id = f"poi-{uuid4().hex}"
+        existing_poi_id = submission.get("poiId")
 
-        poi = {
-            "id": poi_id,
-            "submissionId": submission_id,
-            "ownerId": str(submission["createdBy"]),
+        poi_data = {
             "name": submission.get("name", ""),
             "categoryKey": submission.get("categoryKey", ""),
             "address": submission.get("address", ""),
@@ -141,12 +147,38 @@ def approve_poi_submission(
             "isActive": True,
             "approvalStatus": "approved",
             "revisionStatus": None,
-            "createdAt": now,
             "updatedAt": now,
         }
 
-        inserted = pois.insert_one(poi)
-        inserted_id = inserted.inserted_id
+        if existing_poi_id:
+            # POI đã tồn tại: cập nhật bản ghi cũ, không tạo bản ghi mới.
+            result = pois.update_one(
+                {"id": existing_poi_id},
+                {"$set": poi_data},
+            )
+
+            if result.matched_count == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Existing POI not found",
+                )
+
+            poi_id = existing_poi_id
+
+        else:
+            # POI lần đầu được duyệt: tạo bản ghi mới.
+            poi_id = f"poi-{uuid4().hex}"
+
+            poi = {
+                "id": poi_id,
+                "submissionId": submission_id,
+                "ownerId": str(submission["createdBy"]),
+                "createdAt": now,
+                **poi_data,
+            }
+
+            inserted = pois.insert_one(poi)
+            inserted_id = inserted.inserted_id
 
         result = submissions.update_one(
             {
@@ -165,7 +197,9 @@ def approve_poi_submission(
         )
 
         if result.modified_count != 1:
-            pois.delete_one({"_id": inserted_id})
+            if inserted_id is not None:
+                pois.delete_one({"_id": inserted_id})
+
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Submission status changed. Refresh and retry.",
@@ -200,7 +234,7 @@ def reject_poi_submission(
     request: Request,
     admin: dict[str, Any] = Depends(get_current_admin),
 ):
-    """UC11: Từ chối POI và lưu lời nhắn cho UC9."""
+    """UC11: Từ chối POI và lưu lời nhắn cho POI Owner."""
     database = get_database(request)
     now = datetime.now(UTC)
 
@@ -212,7 +246,7 @@ def reject_poi_submission(
             },
             {
                 "$set": {
-                    "status": "rejected",
+                    "status": "reject",
                     "adminMessage": payload.message,
                     "reviewedAt": now,
                     "updatedAt": now,
@@ -229,9 +263,11 @@ def reject_poi_submission(
         return {
             "message": "POI rejected",
             "submissionId": submission_id,
-            "status": "rejected",
+            "status": "reject",
         }
 
+    except HTTPException:
+        raise
     except PyMongoError as error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -286,6 +322,8 @@ def update_system_poi(
 
         return {"message": "POI updated", "poiId": poi_id}
 
+    except HTTPException:
+        raise
     except PyMongoError as error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -300,7 +338,7 @@ def request_poi_revision(
     request: Request,
     admin: dict[str, Any] = Depends(get_current_admin),
 ):
-    """UC11: Yêu cầu chủ sở hữu chỉnh sửa POI; UC9 đọc được lời nhắn."""
+    """UC11: Yêu cầu POI Owner chỉnh sửa POI."""
     database = get_database(request)
 
     try:
@@ -315,13 +353,18 @@ def request_poi_revision(
         owner_id = poi.get("ownerId")
         submission_id = poi.get("submissionId")
 
-        if not owner_id or not submission_id or not ObjectId.is_valid(owner_id):
+        if (
+            not owner_id
+            or not submission_id
+            or not ObjectId.is_valid(owner_id)
+        ):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="This POI has no valid owner submission link",
             )
 
         now = datetime.now(UTC)
+
         result = database["poi_submissions"].update_one(
             {
                 "submissionId": submission_id,
@@ -330,7 +373,7 @@ def request_poi_revision(
             },
             {
                 "$set": {
-                    "status": "revision_requested",
+                    "status": "fixRequest",
                     "adminMessage": payload.message,
                     "reviewedAt": now,
                     "updatedAt": now,
@@ -348,7 +391,7 @@ def request_poi_revision(
             {"id": poi_id},
             {
                 "$set": {
-                    "revisionStatus": "revision_requested",
+                    "revisionStatus": "fixRequest",
                     "updatedAt": now,
                 }
             },
@@ -357,9 +400,11 @@ def request_poi_revision(
         return {
             "message": "Revision requested",
             "poiId": poi_id,
-            "status": "revision_requested",
+            "status": "fixRequest",
         }
 
+    except HTTPException:
+        raise
     except PyMongoError as error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

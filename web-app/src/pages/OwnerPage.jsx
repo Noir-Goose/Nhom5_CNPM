@@ -1,8 +1,12 @@
+
 import { useState } from "react";
-import { submitPoiRequest } from "../services/authService";
+import {
+  submitPoiRequest,
+  resubmitPoiRequest,
+} from "../services/authService";
 import LocationPicker from "../components/map/LocationPicker";
-import "./OwnerPage.css";
 import SubmissionStatus from "../components/SubmissionStatus";
+import "./OwnerPage.css";
 
 const menuItems = [
   { id: "uc7", icon: "📍", label: "Đăng ký địa điểm" },
@@ -22,31 +26,44 @@ const createEmptyContent = () =>
   Object.fromEntries(
     contentLanguages.map(({ code }) => [
       code,
-      {
-        name: "",
-        description: "",
-        category: "",
-      },
+      { name: "", description: "", category: "" },
     ])
   );
 
 const emptyForm = {
-  name: "",
   categoryKey: "food",
   address: "",
-  description: "",
   latitude: "",
   longitude: "",
 };
+
+const EDITABLE_STATUSES = new Set([
+  "fixRequest",
+  "revision_requested",
+]);
 
 function OwnerPage() {
   const [activeMenu, setActiveMenu] = useState("uc7");
   const [form, setForm] = useState({ ...emptyForm });
   const [content, setContent] = useState(createEmptyContent);
   const [activeLanguage, setActiveLanguage] = useState("vi");
+  const [editingSubmission, setEditingSubmission] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [statusRefreshKey, setStatusRefreshKey] = useState(0);
+
+  function clearAlerts() {
+    setMessage("");
+    setError("");
+  }
+
+  function resetForm() {
+    setForm({ ...emptyForm });
+    setContent(createEmptyContent());
+    setActiveLanguage("vi");
+    setEditingSubmission(null);
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -69,10 +86,54 @@ function OwnerPage() {
     }));
   }
 
+  function handleEditSubmission(submission) {
+    clearAlerts();
+
+    if (!EDITABLE_STATUSES.has(submission.status)) {
+      setError("Yêu cầu này hiện không được phép chỉnh sửa.");
+      return;
+    }
+
+    const savedContent = submission.content || {};
+
+    setForm({
+      categoryKey: submission.categoryKey || "food",
+      address: submission.address || "",
+      latitude:
+        submission.latitude == null
+          ? ""
+          : String(submission.latitude),
+      longitude:
+        submission.longitude == null
+          ? ""
+          : String(submission.longitude),
+    });
+
+    setContent(
+      Object.fromEntries(
+        contentLanguages.map(({ code }) => {
+          const languageContent = savedContent[code] || {};
+
+          return [
+            code,
+            {
+              name: languageContent.name || "",
+              description: languageContent.description || "",
+              category: languageContent.category || "",
+            },
+          ];
+        })
+      )
+    );
+
+    setActiveLanguage("vi");
+    setEditingSubmission(submission);
+    setActiveMenu("uc7");
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
-    setMessage("");
-    setError("");
+    clearAlerts();
 
     const latitude = Number(form.latitude);
     const longitude = Number(form.longitude);
@@ -93,6 +154,11 @@ function OwnerPage() {
       return;
     }
 
+    if (!form.address.trim()) {
+      setError("Vui lòng nhập địa chỉ địa điểm.");
+      return;
+    }
+
     const missingLanguages = contentLanguages.filter(
       ({ code }) => {
         const item = content[code];
@@ -108,51 +174,58 @@ function OwnerPage() {
     if (missingLanguages.length > 0) {
       setError(
         "Vui lòng nhập đủ tên, mô tả và danh mục cho các ngôn ngữ: " +
-          missingLanguages
-            .map((item) => item.label)
-            .join(", ")
+          missingLanguages.map((item) => item.label).join(", ")
       );
 
       setActiveLanguage(missingLanguages[0].code);
       return;
     }
 
-    if (!form.address.trim()) {
-      setError("Vui lòng nhập địa chỉ địa điểm.");
-      return;
-    }
+    const normalizedContent = Object.fromEntries(
+      contentLanguages.map(({ code }) => [
+        code,
+        {
+          name: content[code].name.trim(),
+          description: content[code].description.trim(),
+          category: content[code].category.trim(),
+        },
+      ])
+    );
+
+    const poiData = {
+      name: normalizedContent.vi.name,
+      categoryKey: form.categoryKey,
+      address: form.address.trim(),
+      description: normalizedContent.vi.description,
+      latitude,
+      longitude,
+      content: normalizedContent,
+    };
 
     setIsSubmitting(true);
 
     try {
-      const normalizedContent = Object.fromEntries(
-        contentLanguages.map(({ code }) => [
-          code,
-          {
-            name: content[code].name.trim(),
-            description: content[code].description.trim(),
-            category: content[code].category.trim(),
-          },
-        ])
-      );
+      let result;
 
-      const result = await submitPoiRequest({
-        name: normalizedContent.vi.name,
-        categoryKey: form.categoryKey,
-        address: form.address.trim(),
-        description: normalizedContent.vi.description,
-        latitude,
-        longitude,
-        content: normalizedContent,
-      });
+      if (editingSubmission) {
+        result = await resubmitPoiRequest(
+          editingSubmission.submissionId,
+          poiData
+        );
 
-      setMessage(
-        `Gửi thành công! Mã yêu cầu: ${result.submissionId}. Trạng thái: ${result.status}.`
-      );
+        setMessage(
+          `Đã gửi lại yêu cầu ${result.submissionId}. Trạng thái: Chưa duyệt.`
+        );
+      } else {
+        result = await submitPoiRequest(poiData);
 
-      setForm({ ...emptyForm });
-      setContent(createEmptyContent());
-      setActiveLanguage("vi");
+        setMessage(
+          `Gửi thành công! Mã yêu cầu: ${result.submissionId}. Trạng thái: ${result.status}.`
+        );
+      }
+
+      resetForm();
+      setStatusRefreshKey((current) => current + 1);
     } catch (err) {
       setError(err.message || "Không thể gửi yêu cầu.");
     } finally {
@@ -171,7 +244,7 @@ function OwnerPage() {
       email = user.email;
     }
   } catch {
-    // Sử dụng tên mặc định nếu thông tin tài khoản không hợp lệ.
+    // Dùng tên mặc định nếu dữ liệu tài khoản không hợp lệ.
   }
 
   const selectedMenu = menuItems.find(
@@ -201,8 +274,7 @@ function OwnerPage() {
               }`}
               onClick={() => {
                 setActiveMenu(item.id);
-                setMessage("");
-                setError("");
+                clearAlerts();
               }}
             >
               <span>{item.icon}</span>
@@ -219,12 +291,8 @@ function OwnerPage() {
 
       <div className="owner-main">
         <header className="owner-topbar">
-          <span>
-            Trang quản lý / {selectedMenu.label}
-          </span>
-          <span className="owner-account">
-            👤 POI Owner
-          </span>
+          <span>Trang quản lý / {selectedMenu.label}</span>
+          <span className="owner-account">👤 POI Owner</span>
         </header>
 
         <main className="owner-content">
@@ -235,23 +303,56 @@ function OwnerPage() {
                   <span className="owner-eyebrow">
                     QUẢN LÝ ĐỊA ĐIỂM
                   </span>
-                  <h1>Đăng ký địa điểm mới</h1>
+
+                  <h1>
+                    {editingSubmission
+                      ? "Chỉnh sửa địa điểm"
+                      : "Đăng ký địa điểm mới"}
+                  </h1>
+
                   <p>
-                    Nhập thông tin địa điểm, nội dung đa ngôn ngữ
-                    và chọn vị trí trên bản đồ hoặc nhập tọa độ.
+                    {editingSubmission
+                      ? "Chỉnh sửa thông tin theo phản hồi của Admin rồi gửi lại để xét duyệt."
+                      : "Nhập thông tin địa điểm, nội dung đa ngôn ngữ và chọn vị trí trên bản đồ hoặc nhập tọa độ."}
                   </p>
                 </div>
 
                 <span className="owner-badge">
-                  ● Chờ duyệt sau khi gửi
+                  ●{" "}
+                  {editingSubmission
+                    ? "Yêu cầu cần chỉnh sửa"
+                    : "Chờ duyệt sau khi gửi"}
                 </span>
               </section>
 
+              {editingSubmission && (
+                <section className="owner-alert">
+                  <strong>
+                    Mã yêu cầu: {editingSubmission.submissionId}
+                  </strong>
+
+                  <p>
+                    Phản hồi của Admin:{" "}
+                    {editingSubmission.adminMessage ||
+                      "Admin chưa cung cấp nội dung phản hồi."}
+                  </p>
+
+                  <button
+                    type="button"
+                    className="submission-detail-button"
+                    onClick={() => {
+                      resetForm();
+                      clearAlerts();
+                    }}
+                  >
+                    Hủy chỉnh sửa
+                  </button>
+                </section>
+              )}
+
               <section className="owner-summary">
                 <div className="owner-summary-card">
-                  <span className="owner-summary-icon">
-                    📍
-                  </span>
+                  <span className="owner-summary-icon">📍</span>
                   <div>
                     <small>Vị trí địa điểm</small>
                     <strong>Bản đồ tương tác</strong>
@@ -259,12 +360,14 @@ function OwnerPage() {
                 </div>
 
                 <div className="owner-summary-card">
-                  <span className="owner-summary-icon">
-                    🕒
-                  </span>
+                  <span className="owner-summary-icon">🕒</span>
                   <div>
                     <small>Quy trình</small>
-                    <strong>Gửi yêu cầu chờ duyệt</strong>
+                    <strong>
+                      {editingSubmission
+                        ? "Gửi lại để Admin duyệt"
+                        : "Gửi yêu cầu chờ duyệt"}
+                    </strong>
                   </div>
                 </div>
               </section>
@@ -281,6 +384,7 @@ function OwnerPage() {
                       <label htmlFor="address">
                         Địa chỉ thực tế *
                       </label>
+
                       <input
                         id="address"
                         name="address"
@@ -296,6 +400,7 @@ function OwnerPage() {
                       <label htmlFor="categoryKey">
                         Danh mục hệ thống *
                       </label>
+
                       <select
                         id="categoryKey"
                         name="categoryKey"
@@ -311,9 +416,10 @@ function OwnerPage() {
 
                     <div className="owner-field full-width">
                       <h3>Nội dung đa ngôn ngữ</h3>
+
                       <p className="owner-help">
-                        Nhập tên, mô tả và danh mục hiển thị
-                        cho đủ 5 ngôn ngữ trước khi gửi.
+                        Nhập tên, mô tả và danh mục hiển thị cho đủ
+                        5 ngôn ngữ trước khi gửi.
                       </p>
 
                       <div
@@ -321,36 +427,30 @@ function OwnerPage() {
                         role="group"
                         aria-label="Chọn ngôn ngữ nội dung"
                       >
-                        {contentLanguages.map(
-                          ({ code, label }) => {
-                            const item = content[code];
+                        {contentLanguages.map(({ code, label }) => {
+                          const item = content[code];
 
-                            const complete =
-                              item.name.trim() !== "" &&
-                              item.description.trim() !== "" &&
-                              item.category.trim() !== "";
+                          const complete =
+                            item.name.trim() !== "" &&
+                            item.description.trim() !== "" &&
+                            item.category.trim() !== "";
 
-                            return (
-                              <button
-                                key={code}
-                                type="button"
-                                className={
-                                  activeLanguage === code
-                                    ? "active"
-                                    : ""
-                                }
-                                onClick={() =>
-                                  setActiveLanguage(code)
-                                }
-                              >
-                                {label}
-                                <span>
-                                  {complete ? " ✓" : " *"}
-                                </span>
-                              </button>
-                            );
-                          }
-                        )}
+                          return (
+                            <button
+                              key={code}
+                              type="button"
+                              className={
+                                activeLanguage === code
+                                  ? "active"
+                                  : ""
+                              }
+                              onClick={() => setActiveLanguage(code)}
+                            >
+                              {label}
+                              <span>{complete ? " ✓" : " *"}</span>
+                            </button>
+                          );
+                        })}
                       </div>
 
                       <p className="owner-help">
@@ -358,8 +458,7 @@ function OwnerPage() {
                         <strong>
                           {
                             contentLanguages.find(
-                              (item) =>
-                                item.code === activeLanguage
+                              (item) => item.code === activeLanguage
                             )?.label
                           }
                         </strong>
@@ -369,6 +468,7 @@ function OwnerPage() {
                         <label htmlFor="content-name">
                           Tên địa điểm *
                         </label>
+
                         <input
                           id="content-name"
                           name="name"
@@ -384,6 +484,7 @@ function OwnerPage() {
                         <label htmlFor="content-description">
                           Mô tả *
                         </label>
+
                         <textarea
                           id="content-description"
                           name="description"
@@ -402,12 +503,11 @@ function OwnerPage() {
                         <label htmlFor="content-category">
                           Danh mục hiển thị *
                         </label>
+
                         <input
                           id="content-category"
                           name="category"
-                          value={
-                            content[activeLanguage].category
-                          }
+                          value={content[activeLanguage].category}
                           onChange={handleContentChange}
                           placeholder="Ví dụ: Ẩm thực / Food"
                           maxLength={100}
@@ -418,6 +518,7 @@ function OwnerPage() {
 
                     <div className="owner-field full-width">
                       <h3>Vị trí địa điểm *</h3>
+
                       <p className="owner-help">
                         Nhập tọa độ trực tiếp hoặc nhấn vào bản đồ.
                         Hai cách sẽ cập nhật cùng dữ liệu.
@@ -428,6 +529,7 @@ function OwnerPage() {
                           <label htmlFor="latitude">
                             Vĩ độ (Latitude) *
                           </label>
+
                           <input
                             id="latitude"
                             name="latitude"
@@ -446,6 +548,7 @@ function OwnerPage() {
                           <label htmlFor="longitude">
                             Kinh độ (Longitude) *
                           </label>
+
                           <input
                             id="longitude"
                             name="longitude"
@@ -472,10 +575,7 @@ function OwnerPage() {
                             latitude: form.latitude,
                             longitude: form.longitude,
                           }}
-                          onChange={({
-                            latitude,
-                            longitude,
-                          }) => {
+                          onChange={({ latitude, longitude }) => {
                             setForm((current) => ({
                               ...current,
                               latitude: String(latitude),
@@ -513,17 +613,21 @@ function OwnerPage() {
                     >
                       {isSubmitting
                         ? "Đang gửi..."
-                        : "Gửi yêu cầu đăng ký →"}
+                        : editingSubmission
+                          ? "Gửi lại yêu cầu →"
+                          : "Gửi yêu cầu đăng ký →"}
                     </button>
                   </div>
                 </form>
               </section>
             </>
           ) : activeMenu === "uc8" ? (
-            <SubmissionStatus />
+            <SubmissionStatus
+              key={statusRefreshKey}
+              onEditSubmission={handleEditSubmission}
+            />
           ) : (
             <section className="owner-card owner-coming-soon">
-
               <h1>{selectedMenu.label}</h1>
 
               <p>

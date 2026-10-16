@@ -334,6 +334,14 @@
   color: #24613b;
 }
 
+.owner-alert p {
+  margin: 8px 0 12px;
+}
+
+.owner-alert .submission-detail-button {
+  margin-top: 4px;
+}
+
 .owner-actions {
   display: flex;
   justify-content: flex-end;
@@ -365,6 +373,7 @@
 .owner-coming-soon {
   text-align: center;
   padding: 48px 24px;
+  line-height: 1.7;
 }
 
 .owner-coming-soon .owner-summary-icon {
@@ -382,6 +391,45 @@
   line-height: 1.7;
 }
 
+/* Tabs chọn ngôn ngữ nội dung POI */
+.owner-language-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.owner-language-tabs button {
+  padding: 9px 13px;
+  border: 1px solid #d8e1d9;
+  border-radius: 8px;
+  background: #fff;
+  color: #405348;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.owner-language-tabs button:hover {
+  background: #f0f6f0;
+}
+
+.owner-language-tabs button.active {
+  border-color: #24543a;
+  background: #24543a;
+  color: #fff;
+}
+
+.owner-language-tabs button span {
+  font-weight: 700;
+}
+
+.owner-alert.success,
+.owner-alert.error {
+  margin-bottom: 12px;
+}
+
+/* Responsive */
 @media (max-width: 800px) {
   .owner-sidebar {
     width: 210px;
@@ -460,5 +508,18 @@
   .owner-actions,
   .owner-submit {
     width: 100%;
+  }
+
+  .owner-language-tabs {
+    gap: 6px;
+  }
+
+  .owner-language-tabs button {
+    flex: 1 1 auto;
+    padding: 9px 10px;
+  }
+
+  .owner-badge {
+    white-space: normal;
   }
 }
