@@ -12,9 +12,9 @@ from pymongo.errors import PyMongoError
 
 from app.notifications.router import router as owner_notifications_router
 from app.admin.router import router as admin_router
+from app.admin.users_router import router as admin_users_router
 from app.auth.router import router as auth_router
 from app.admin.poi_router import router as admin_poi_router
-from app.notifications.router import router as owner_notifications_router
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_DIR / ".env")
 
@@ -97,6 +97,7 @@ app.include_router(auth_router)
 app.include_router(admin_poi_router)
 app.include_router(poi_owner_router)
 app.include_router(admin_router)
+app.include_router(admin_users_router)
 app.include_router(owner_notifications_router)
 app.add_middleware(
     CORSMiddleware,

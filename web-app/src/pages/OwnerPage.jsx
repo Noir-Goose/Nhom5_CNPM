@@ -1,11 +1,12 @@
 import NotificationPanel from "../components/owner/notifications/NotificationPanel";
 import { useState } from "react";
+import { poiCategoryOptions } from "../data/categories";
 import {
   submitPoiRequest,
   resubmitPoiRequest,
 } from "../services/authService";
 import LocationPicker from "../components/map/LocationPicker";
-import SubmissionStatus from "../components/SubmissionStatus";
+import SubmissionStatus from "../components/owner/submissions/SubmissionStatus";
 import "./OwnerPage.css";
 
 const menuItems = [
@@ -408,9 +409,11 @@ function OwnerPage() {
                         onChange={handleChange}
                         required
                       >
-                        <option value="food">Đồ ăn</option>
-                        <option value="drink">Đồ uống</option>
-                        <option value="dessert">Tráng miệng</option>
+                        {poiCategoryOptions.map((category) => (
+                          <option key={category.key} value={category.key}>
+                            {category.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -627,25 +630,25 @@ function OwnerPage() {
               onEditSubmission={handleEditSubmission}
             />
           ) : activeMenu === "uc9" ? (
-                  <NotificationPanel />
-                ) : (
-                  <section className="owner-card owner-coming-soon">
-                    <h1>{selectedMenu.label}</h1>
+            <NotificationPanel />
+          ) : (
+            <section className="owner-card owner-coming-soon">
+              <h1>{selectedMenu.label}</h1>
 
-                    <p>
-                      Chức năng này sẽ được phát triển sau khi xác định
-                      yêu cầu nghiệp vụ tương ứng.
-                    </p>
+              <p>
+                Chức năng này sẽ được phát triển sau khi xác định
+                yêu cầu nghiệp vụ tương ứng.
+              </p>
 
-                    <button
-                      className="owner-submit"
-                      type="button"
-                      onClick={() => setActiveMenu("uc7")}
-                    >
-                      Quay lại UC7
-                    </button>
-                  </section>
-                )}
+              <button
+                className="owner-submit"
+                type="button"
+                onClick={() => setActiveMenu("uc7")}
+              >
+                Quay lại UC7
+              </button>
+            </section>
+          )}
         </main>
       </div>
     </div>

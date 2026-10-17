@@ -1,0 +1,41 @@
+export const uiLabels = {
+  headerSubtitle: {
+    vi: "Khám phá ẩm thực bằng thuyết minh",
+    en: "Explore local food with audio narration",
+    zh: "通过语音讲解探索当地美食",
+    ja: "音声ガイドで地元のグルメを探索",
+    ko: "음성 안내로 현지 음식을 탐험하세요",
+  },
+  languageError: {
+    vi: "Không thể lưu ngôn ngữ. Giữ nguyên ngôn ngữ hiện tại.",
+    en: "Could not save the language. The current language is unchanged.",
+    zh: "无法保存语言设置，当前语言保持不变。",
+    ja: "言語設定を保存できませんでした。現在の言語を維持します。",
+    ko: "언어 설정을 저장할 수 없습니다. 현재 언어를 유지합니다.",
+  },
+  selectedPlace: {
+    vi: "ĐỊA ĐIỂM ĐƯỢC CHỌN", en: "SELECTED PLACE", zh: "已选择的地点", ja: "選択した場所", ko: "선택한 장소",
+  },
+  closePoi: { vi: "Đóng", en: "Close", zh: "关闭", ja: "閉じる", ko: "닫기" },
+  audio: {
+    play: { vi: "🔊 Nghe thuyết minh", en: "🔊 Listen to narration", zh: "🔊 播放讲解", ja: "🔊 音声ガイドを聞く", ko: "🔊 음성 안내 듣기" },
+    stop: { vi: "⏹ Dừng thuyết minh", en: "⏹ Stop narration", zh: "⏹ 停止讲解", ja: "⏹ 音声ガイドを停止", ko: "⏹ 안내 음성 중지" },
+    unsupported: { vi: "Trình duyệt không hỗ trợ thuyết minh.", en: "This browser does not support speech narration.", zh: "此浏览器不支持语音讲解。", ja: "このブラウザーは音声読み上げに対応していません。", ko: "이 브라우저는 음성 안내를 지원하지 않습니다." },
+    empty: { vi: "Địa điểm chưa có nội dung thuyết minh.", en: "No narration content is available for this place.", zh: "此地点暂无讲解内容。", ja: "この場所には音声ガイドの内容がありません。", ko: "이 장소에는 음성 안내 콘텐츠가 없습니다." },
+    error: { vi: "Không thể phát thuyết minh. Vui lòng thử lại.", en: "Unable to play narration. Please try again.", zh: "无法播放讲解，请重试。", ja: "音声ガイドを再生できません。もう一度お試しください。", ko: "음성 안내를 재생할 수 없습니다. 다시 시도하세요." },
+  },
+  map: {
+    locate: { vi: "◎ Vị trí của tôi", en: "◎ My location", zh: "◎ 我的位置", ja: "◎ 現在地", ko: "◎ 내 위치" },
+    locating: { vi: "Đang định vị...", en: "Locating...", zh: "正在定位...", ja: "位置を取得中...", ko: "위치 확인 중..." },
+    gpsUnsupported: { vi: "Trình duyệt không hỗ trợ định vị GPS.", en: "This browser does not support GPS location.", zh: "此浏览器不支持 GPS 定位。", ja: "このブラウザーは GPS 位置情報に対応していません。", ko: "이 브라우저는 GPS 위치 확인을 지원하지 않습니다." },
+    permission: { vi: "Bạn chưa cấp quyền truy cập vị trí.", en: "Location permission has not been granted.", zh: "您尚未授予位置访问权限。", ja: "位置情報へのアクセスが許可されていません。", ko: "위치 접근 권한이 허용되지 않았습니다." },
+    unknown: { vi: "Không xác định được vị trí GPS.", en: "Unable to determine GPS location.", zh: "无法确定 GPS 位置。", ja: "GPS の位置を特定できません。", ko: "GPS 위치를 확인할 수 없습니다." },
+    timeout: { vi: "Lấy vị trí quá lâu. Vui lòng thử lại.", en: "Location request timed out. Please try again.", zh: "获取位置超时，请重试。", ja: "位置情報の取得がタイムアウトしました。もう一度お試しください。", ko: "위치 확인 시간이 초과되었습니다. 다시 시도하세요." },
+    failed: { vi: "Không lấy được vị trí hiện tại.", en: "Could not get your current location.", zh: "无法获取当前位置。", ja: "現在地を取得できません。", ko: "현재 위치를 가져올 수 없습니다." },
+    currentLocation: { vi: "Vị trí hiện tại của bạn", en: "Your current location", zh: "您的当前位置", ja: "現在地", ko: "현재 위치" },
+    nearby: { vi: "Địa điểm gần bạn (trong 5 km)", en: "Places near you (within 5 km)", zh: "您附近的地点（5 公里内）", ja: "近くのスポット（5 km 以内）", ko: "내 주변 장소(5km 이내)" },
+    noNearby: { vi: "Không tìm thấy POI có tọa độ hợp lệ trong bán kính 5 km.", en: "No POIs with valid coordinates were found within 5 km.", zh: "5 公里范围内没有找到坐标有效的地点。", ja: "半径 5 km 以内に有効な座標を持つスポットがありません。", ko: "반경 5km 내에 유효한 좌표가 있는 장소가 없습니다." },
+    loadError: { vi: "Không thể tải bản đồ và danh sách địa điểm.", en: "Could not load the map and places.", zh: "无法加载地图和地点列表。", ja: "地図とスポット一覧を読み込めませんでした。", ko: "지도와 장소 목록을 불러올 수 없습니다." },
+    loading: { vi: "Đang tải bản đồ và địa điểm...", en: "Loading map and places...", zh: "正在加载地图和地点...", ja: "地図とスポットを読み込み中...", ko: "지도와 장소를 불러오는 중..." },
+  },
+};

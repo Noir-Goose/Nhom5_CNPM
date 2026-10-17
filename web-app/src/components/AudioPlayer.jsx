@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { uiLabels } from "../data/i18n/uiLabels";
 
 function AudioPlayer({ poi, language, speechLanguage }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -17,6 +18,8 @@ function AudioPlayer({ poi, language, speechLanguage }) {
   const textToSpeak = [name, description]
     .filter(Boolean)
     .join(". ");
+  const labels = uiLabels.audio;
+  const current = (key) => labels[key]?.[language] ?? labels[key]?.vi ?? "";
 
   useEffect(() => {
     return () => {
@@ -26,12 +29,12 @@ function AudioPlayer({ poi, language, speechLanguage }) {
 
   const handlePlay = () => {
     if (!("speechSynthesis" in window)) {
-      setSpeechError("Trình duyệt không hỗ trợ thuyết minh.");
+      setSpeechError(current("unsupported"));
       return;
     }
 
     if (!textToSpeak.trim()) {
-      setSpeechError("Địa điểm chưa có nội dung thuyết minh.");
+      setSpeechError(current("empty"));
       return;
     }
 
@@ -52,7 +55,7 @@ function AudioPlayer({ poi, language, speechLanguage }) {
         event.error !== "canceled" &&
         event.error !== "interrupted"
       ) {
-        setSpeechError("Không thể phát thuyết minh. Vui lòng thử lại.");
+        setSpeechError(current("error"));
       }
     };
 
@@ -73,12 +76,10 @@ function AudioPlayer({ poi, language, speechLanguage }) {
         onClick={isSpeaking ? handleStop : handlePlay}
         disabled={!textToSpeak.trim()}
         aria-label={
-          isSpeaking ? "Dừng thuyết minh" : "Nghe thuyết minh"
+          isSpeaking ? current("stop").replace(/^⏹\s*/, "") : current("play").replace(/^🔊\s*/, "")
         }
       >
-        {isSpeaking
-          ? "⏹ Dừng thuyết minh"
-          : "🔊 Nghe thuyết minh"}
+        {isSpeaking ? current("stop") : current("play")}
       </button>
 
       {speechError && (

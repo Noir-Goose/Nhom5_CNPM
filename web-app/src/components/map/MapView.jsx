@@ -7,6 +7,7 @@ import {
   useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { uiLabels } from "../../data/i18n/uiLabels";
 
 function getPoiCoordinates(poi) {
   if (!poi) return null;
@@ -123,6 +124,8 @@ export default function MapView({
   }, [pois]);
 
   const selectedCoordinates = getPoiCoordinates(selectedPoi);
+  const labels = uiLabels.map;
+  const text = (key) => labels[key]?.[language] ?? labels[key]?.vi ?? "";
 
   const nearbyPois = useMemo(() => {
     if (!userLocation) return [];
@@ -146,9 +149,7 @@ export default function MapView({
     setLocationError("");
 
     if (!navigator.geolocation) {
-      setLocationError(
-        "Trình duyệt không hỗ trợ định vị GPS."
-      );
+      setLocationError("gpsUnsupported");
       return;
     }
 
@@ -164,15 +165,11 @@ export default function MapView({
       },
       (error) => {
         const messages = {
-          1: "Bạn chưa cấp quyền truy cập vị trí.",
-          2: "Không xác định được vị trí GPS.",
-          3: "Lấy vị trí quá lâu. Vui lòng thử lại.",
+          1: "permission",
+          2: "unknown",
+          3: "timeout",
         };
-
-        setLocationError(
-          messages[error.code] ??
-            "Không lấy được vị trí hiện tại."
-        );
+        setLocationError(messages[error.code] ?? "failed");
         setIsLocating(false);
       },
       {
@@ -190,10 +187,10 @@ export default function MapView({
           type="button"
           onClick={handleLocate}
           disabled={isLocating}
-          aria-label="Lấy vị trí hiện tại"
-          title="Lấy vị trí hiện tại"
+          aria-label={text("locate")}
+          title={text("locate")}
         >
-          {isLocating ? "Đang định vị..." : "◎ Vị trí của tôi"}
+          {isLocating ? text("locating") : text("locate")}
         </button>
       </div>
 
@@ -242,20 +239,20 @@ export default function MapView({
 
         {userLocation && (
           <Marker position={userLocation}>
-            <Popup>Vị trí hiện tại của bạn</Popup>
+            <Popup>{text("currentLocation")}</Popup>
           </Marker>
         )}
       </MapContainer>
 
       {locationError && (
         <p className="location-error" role="alert">
-          {locationError}
+          {text(locationError)}
         </p>
       )}
 
       {userLocation && (
         <section className="nearby-pois">
-          <h3>Địa điểm gần bạn (trong 5 km)</h3>
+          <h3>{text("nearby")}</h3>
 
           {nearbyPois.length > 0 ? (
             <ul>
@@ -283,9 +280,7 @@ export default function MapView({
               })}
             </ul>
           ) : (
-            <p>
-              Không tìm thấy POI có tọa độ hợp lệ trong bán kính 5 km.
-            </p>
+            <p>{text("noNearby")}</p>
           )}
         </section>
       )}

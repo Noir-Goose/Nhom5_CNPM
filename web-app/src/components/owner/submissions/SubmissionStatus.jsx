@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMyPoiSubmissions } from "../services/authService";
+import { getMyPoiSubmissions } from "../../../services/authService";
 import "./SubmissionStatus.css";
 
 const STATUS_LABELS = {

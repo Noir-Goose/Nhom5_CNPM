@@ -44,6 +44,12 @@ def get_current_user(
             detail="User account not found",
         )
 
+    if user.get("role") != "admin" and user.get("isActive", True) is False:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.",
+        )
+
     if not user.get("emailVerified", False):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

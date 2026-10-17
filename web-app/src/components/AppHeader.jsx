@@ -1,5 +1,6 @@
 
 import LanguageSelector from "./LanguageSelector";
+import { uiLabels } from "../data/i18n/uiLabels";
 
 function AppHeader({
   language,
@@ -16,7 +17,7 @@ function AppHeader({
 
         <div className="brand-text">
           <h1>Quận 4 Food Guide</h1>
-          <span>Khám phá ẩm thực bằng thuyết minh</span>
+          <span>{uiLabels.headerSubtitle[language] ?? uiLabels.headerSubtitle.vi}</span>
         </div>
       </div>
 
@@ -29,7 +30,7 @@ function AppHeader({
 
         {languageError && (
           <div className="language-error" role="alert">
-            {languageError}
+            {uiLabels.languageError[language] ?? uiLabels.languageError.vi}
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { uiLabels } from "../data/mockPois";
+import { uiLabels } from "../data/i18n/uiLabels";
 import AudioPlayer from "./AudioPlayer";
 
 function SelectedPoiPanel({

@@ -6,7 +6,8 @@ import {
   deleteRejectedPoiOwnerRegistration,
 } from "../services/adminService";
 import "./AdminPage.css";
-import AdminPoiManagement from "./AdminPoiManagement";
+import AdminPoiManagement from "../components/admin/poi/AdminPoiManagement";
+import AdminUserManagement from "../components/admin/users/AdminUserManagement";
 
 const menuItems = [
   {
@@ -18,6 +19,11 @@ const menuItems = [
     id: "poi-management",
     icon: "📍",
     label: "Quản lý POI",
+  },
+  {
+    id: "user-management",
+    icon: "👥",
+    label: "Quản lý người dùng",
   },
 ];
 
@@ -199,6 +205,8 @@ function AdminPage() {
         <main className="admin-content">
           {activeMenu === "poi-management" ? (
             <AdminPoiManagement />
+          ) : activeMenu === "user-management" ? (
+            <AdminUserManagement />
           ) : (
             <>
               <section className="admin-heading">

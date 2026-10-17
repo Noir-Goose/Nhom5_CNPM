@@ -6,9 +6,10 @@ import {
   getSystemPois,
   updateSystemPoi,
   requestPoiRevision,
-} from "../services/adminPoiService";
-import "./AdminPage.css";
-import LocationPicker from "../components/map/LocationPicker";
+} from "../../../services/adminPoiService";
+import "../../../pages/AdminPage.css";
+import LocationPicker from "../../map/LocationPicker";
+import { poiCategoryOptions } from "../../../data/categories";
 
 const contentLanguages = [
   { code: "vi", label: "Tiếng Việt" },
@@ -454,9 +455,11 @@ function AdminPoiManagement() {
                   onChange={handleFormChange}
                   required
                 >
-                  <option value="food">Đồ ăn</option>
-                  <option value="drink">Đồ uống</option>
-                  <option value="dessert">Tráng miệng</option>
+                  {poiCategoryOptions.map((category) => (
+                    <option key={category.key} value={category.key}>
+                      {category.label}
+                    </option>
+                  ))}
                 </select>
               </label>
 

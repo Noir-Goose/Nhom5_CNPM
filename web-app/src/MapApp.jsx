@@ -5,10 +5,8 @@ import {
 } from "react";
 
 import "./App.css";
-import {
-  categories,
-  languages,
-} from "./data/mockPois";
+import { categories } from "./data/categories";
+import { languages } from "./data/languages";
 
 import AppHeader from "./components/AppHeader";
 import DiscoveryPanel from "./components/DiscoveryPanel";
@@ -71,9 +69,7 @@ function MapApp() {
       } catch (error) {
           console.error("Lỗi tải POI từ API:", error);
 
-          setPoiLoadError(
-            "Không thể tải bản đồ và danh sách địa điểm."
-        );
+          setPoiLoadError("load-error");
       } finally {
         setIsLoadingPois(false);
       }
@@ -127,9 +123,13 @@ function MapApp() {
         .toLowerCase()
         .includes(normalizedSearch);
 
+    // Hỗ trợ dữ liệu cũ: phở/bánh mì được xếp vào nhóm Đồ ăn.
+    const legacyFoodKeys = ["food", "pho", "banh-mi"];
     const matchesCategory =
       selectedCategory === "all" ||
-      poi.categoryKey === selectedCategory;
+      (selectedCategory === "food"
+        ? legacyFoodKeys.includes(poi.categoryKey)
+        : poi.categoryKey === selectedCategory);
 
     return (
       matchesSearch &&
@@ -159,12 +159,8 @@ function MapApp() {
       window.speechSynthesis?.cancel();
 
       setLanguage(nextLanguage);
-    } catch (error) {
-      setLanguageError(
-        error instanceof Error
-          ? error.message
-          : "Không thể thay đổi ngôn ngữ."
-      );
+    } catch {
+      setLanguageError("language-save-error");
     }
   };
 
@@ -217,6 +213,7 @@ function MapApp() {
           <MapStatus
             loading={isLoadingPois}
             error={poiLoadError}
+            language={language}
           />
 
           {!isLoadingPois && !poiLoadError && (

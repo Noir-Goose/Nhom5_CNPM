@@ -1,4 +1,4 @@
-import { languages } from "../data/mockPois";
+import { languages } from "../data/languages";
 
 const LANGUAGE_STORAGE_KEY = "q4-language";
 
