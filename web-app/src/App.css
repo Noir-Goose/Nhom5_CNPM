@@ -773,6 +773,11 @@ select:focus-visible {
   border: 0;
 }
 
+/* Khi có POI detail, ẩn Nearby POIs */
+.map-area.has-selected-poi .nearby-pois {
+  display: none !important;
+}
+
 /* Loading / status overlay */
 
 .map-status {
@@ -853,6 +858,7 @@ select:focus-visible {
     left: 10px;
   }
 }
+
 
 @media (max-width: 480px) {
   .top-bar {
@@ -1105,10 +1111,7 @@ body,
   overscroll-behavior: contain;
 }
 
-/* Khi có POI detail, ẩn Nearby POIs */
-.map-area.has-selected-poi .nearby-pois {
-  display: none !important;
-}
+
 
 /* ==========================================
    TABLET
