@@ -7,6 +7,7 @@ function AppHeader({
   languages,
   onLanguageChange,
   languageError,
+  onGetAppQr, /* Lay QR tham gia ung dung*/
 }) {
   return (
     <header className="top-bar">
@@ -22,18 +23,36 @@ function AppHeader({
       </div>
 
       <div className="header-language">
+        <div className="header-language-actions">
+        <button
+          type="button"
+          className="get-app-qr-button"
+          onClick={onGetAppQr}  // Nút lấy QR map chung
+        > 
+          {({
+            vi: "Lấy QR",
+            en: "Get QR",
+            fr: "Obtenir le QR",
+            zh: "获取二维码",
+            ja: "QRコードを取得",
+            ko: "QR 코드 받기",
+            es: "Obtener QR",
+          })[language] ?? "Get QR"}
+        </button> 
+
         <LanguageSelector
           language={language}
           languages={languages}
           onChange={onLanguageChange}
         />
+      </div>
 
         {languageError && (
           <div className="language-error" role="alert">
             {uiLabels.languageError[language] ?? uiLabels.languageError.vi}
           </div>
         )}
-      </div>
+    </div>
     </header>
   );
 }

@@ -590,15 +590,21 @@ select:focus-visible {
 
 .selected-poi-image {
   display: flex;
-  flex: 0 0 48px;
   align-items: center;
-  justify-content: center;
   width: 48px;
-  height: 48px;
   font-size: 25px;
   background: var(--green-light);
-  border-radius: 12px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  align-self: flex-start;
+  gap: 10px;
+  height: auto;
+  min-height: 0;
 }
+
 
 .selected-poi-info {
   flex: 1;
@@ -834,12 +840,7 @@ select:focus-visible {
     padding: 14px;
   }
 
-  .selected-poi-image {
-    flex-basis: 40px;
-    width: 40px;
-    height: 40px;
-    font-size: 21px;
-  }
+
 
   .selected-poi-info h3 {
     font-size: 17px;
@@ -912,4 +913,465 @@ select:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+/* Ngay 19/10/2026 */
+/* ==========================================
+   RESPONSIVE MAP LAYOUT OVERRIDES
+   Thêm cuối App.css
+========================================== */
+
+/* Khóa layout theo chiều cao viewport */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.map-app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Header giữ nguyên phía trên, không bị cuộn theo POI */
+.top-bar {
+  flex: 0 0 auto;
+}
+
+/* Map và sidebar chỉ chiếm phần không gian còn lại */
+.main-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 430px) minmax(0, 1fr);
+  flex: 1 1 auto;
+  width: 100%;
+  height: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Khung sidebar và nút gập */
+.sidebar-shell {
+  position: relative;
+  z-index: 20;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+/* Sidebar không được tự cuộn toàn bộ */
+.sidebar-shell > .discovery-panel {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 20px 16px;
+  gap: 14px;
+  overflow: hidden;
+}
+
+/* Header, search và category không co lại */
+.discovery-header,
+.discovery-panel > .search-box,
+.discovery-panel > .category-list,
+.discovery-panel > .category-filters,
+.discovery-panel > .category-buttons,
+.discovery-panel > .filter-buttons {
+  flex: 0 0 auto;
+}
+
+/* Chỉ danh sách POI được phép cuộn */
+.discovery-panel > .poi-list,
+.discovery-panel > .discovery-list {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #bdc9bf transparent;
+}
+
+/* Nếu discovery-list chứa poi-list */
+.discovery-list > .poi-list {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Scrollbar chỉ xuất hiện khi nội dung vượt chiều cao */
+.poi-list::-webkit-scrollbar,
+.discovery-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+.poi-list::-webkit-scrollbar-track,
+.discovery-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.poi-list::-webkit-scrollbar-thumb,
+.discovery-list::-webkit-scrollbar-thumb {
+  background: #bdc9bf;
+  border-radius: 10px;
+}
+
+.poi-list::-webkit-scrollbar-thumb:hover,
+.discovery-list::-webkit-scrollbar-thumb:hover {
+  background: #87988b;
+}
+
+/* Nút đóng/mở gắn với cạnh sidebar */
+.sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  right: -17px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 58px;
+  padding: 0;
+  color: #24583c;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  background: #fff;
+  border: 1px solid #dce5dd;
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 3px 2px 10px rgb(25 45 32 / 12%);
+  transform: translateY(-50%);
+}
+
+.sidebar-toggle:hover {
+  color: #fff;
+  background: #1c6a47;
+}
+
+/* Khi sidebar đóng, map sử dụng toàn bộ chiều rộng */
+.main-layout.sidebar-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+.sidebar-collapsed .sidebar-shell {
+  width: 0;
+  overflow: visible;
+}
+
+.sidebar-collapsed .sidebar-shell > .discovery-panel {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-toggle {
+  right: auto;
+  left: 0;
+  border-left: 1px solid #dce5dd;
+  border-radius: 0 10px 10px 0;
+}
+
+/* Map không tạo scroll của trang */
+.map-area {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.map-view,
+.leaflet-map {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Detail giữ ở góc dưới bên phải */
+.selected-poi {
+  right: 16px;
+  bottom: 16px;
+  max-width: calc(100% - 32px);
+  max-height: min(48%, 340px);
+  overscroll-behavior: contain;
+}
+
+/* Khi có POI detail, ẩn Nearby POIs */
+.map-area.has-selected-poi .nearby-pois {
+  display: none !important;
+}
+
+/* ==========================================
+   TABLET
+========================================== */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .main-layout {
+    grid-template-columns: minmax(0, 350px) minmax(0, 1fr);
+  }
+
+  .main-layout.sidebar-collapsed {
+    grid-template-columns: 0 minmax(0, 1fr);
+  }
+
+  .sidebar-shell > .discovery-panel {
+    padding: 18px 14px;
+    gap: 12px;
+  }
+}
+
+/* ==========================================
+   MOBILE
+========================================== */
+@media (max-width: 760px) {
+  .main-layout {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(150px, 40%) minmax(0, 1fr);
+  }
+
+  .sidebar-shell {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+  }
+
+  .sidebar-shell > .discovery-panel {
+    padding: 12px;
+    gap: 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-toggle {
+    right: 12px;
+    width: 34px;
+    height: 42px;
+    border-left: 1px solid #dce5dd;
+    border-radius: 9px;
+  }
+
+  .map-area {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .main-layout.sidebar-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 0 minmax(0, 1fr);
+  }
+
+  .main-layout.sidebar-collapsed .sidebar-shell {
+    grid-column: 1;
+    grid-row: 1;
+    width: 0;
+    min-height: 0;
+  }
+
+  .main-layout.sidebar-collapsed .sidebar-toggle {
+    position: fixed;
+    top: 50%;
+    right: auto;
+    left: 0;
+    width: 34px;
+    height: 58px;
+    border-radius: 0 10px 10px 0;
+    transform: translateY(-50%);
+  }
+
+  .main-layout.sidebar-collapsed .map-area {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .selected-poi {
+    right: 8px;
+    bottom: 8px;
+    width: calc(100% - 16px);
+    max-width: none;
+    max-height: 45%;
+    padding: 12px;
+  }
+}
+
+
+/* ==========================================
+   QR CODE MODAL
+========================================== */
+
+.qr-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(15 25 18 / 55%);
+  backdrop-filter: blur(3px);
+}
+
+.qr-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: min(100%, 380px);
+  max-height: 90dvh;
+  padding: 28px 22px;
+  overflow-y: auto;
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 20%);
+}
+
+.qr-modal h2 {
+  margin: 0;
+  padding: 0 24px;
+  color: #17251c;
+  font-size: 21px;
+  line-height: 1.4;
+}
+
+.qr-modal p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.qr-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: #657168;
+  font-size: 26px;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+}
+
+.qr-modal-close:hover {
+  color: #17251c;
+  background: #edf5ef;
+}
+
+.qr-code-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e5eae5;
+  border-radius: 12px;
+}
+
+.qr-code-container svg {
+  display: block;
+  width: min(240px, 65vw);
+  height: auto;
+}
+
+.qr-copy-button {
+  min-height: 42px;
+  padding: 10px 16px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  background: var(--green);
+  border: 0;
+  border-radius: 10px;
+}
+
+.qr-copy-button:hover {
+  background: var(--green-dark);
+}
+
+.header-language-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.get-app-qr-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 12px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background-color: #2563eb;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.get-app-qr-button:hover {
+  background-color: #1d4ed8;
+}
+
+.get-app-qr-button:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.get-poi-qr-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background-color: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.get-poi-qr-button:hover {
+  background-color: #1d4ed8;
+}
+
+.get-poi-qr-button:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.selected-poi-image > span {
+  display: block;
+  flex-shrink: 0;
+}
+
+.selected-poi-image > .get-poi-qr-button {
+  display: flex;
+  flex-shrink: 0;
+  margin-top: 0;
 }

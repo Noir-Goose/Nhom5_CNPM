@@ -4,6 +4,8 @@ import {
   useState,
 } from "react";
 
+import { QRCodeSVG } from "qrcode.react"; // Thu vien tao QR
+
 import "./App.css";
 import { categories } from "./data/categories";
 import { languages } from "./data/languages";
@@ -31,8 +33,13 @@ function MapApp() {
     useState(null);
 
   const [isPoiDetailsOpen, setIsPoiDetailsOpen] =
-    useState(false);
+  useState(false);
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] =
+  useState(false);
+
+  const [qrDialog, setQrDialog] = useState(null);
+  
   // =========================
   // App / UI state
   // =========================
@@ -61,11 +68,27 @@ function MapApp() {
 
         setPois(loadedPois);
 
-        setSelectedPoi(
-          loadedPois.length > 0
-            ? loadedPois[0]
-            : null
-        );
+        const requestedPoiId =
+          new URLSearchParams(window.location.search)
+            .get("poi");
+
+        const requestedPoi = requestedPoiId
+          ? loadedPois.find(
+              (poi) => String(poi.id) === requestedPoiId // Nếu dữ liệu POI sử dụng trường định danh khác id, hãy thay poi.id bằng trường thực tế.
+            )
+          : null;
+
+        if (requestedPoi) {
+          setSelectedPoi(requestedPoi);
+          setIsPoiDetailsOpen(true);
+        } else {
+          setSelectedPoi(
+            loadedPois.length > 0
+              ? loadedPois[0]
+              : null
+          );
+        }
+
       } catch (error) {
           console.error("Lỗi tải POI từ API:", error);
 
@@ -175,9 +198,40 @@ function MapApp() {
   };
 
   const handleClosePoi = () => {
-    window.speechSynthesis?.cancel();
+  window.speechSynthesis?.cancel();
 
-    setIsPoiDetailsOpen(false);
+  setIsPoiDetailsOpen(false);
+  };
+
+  // QR mở ứng dụng bản đồ chung.
+  const handleOpenAppQr = () => {
+    const url = new URL(window.location.href);
+
+    url.searchParams.delete("poi");
+    url.hash = "";
+
+    setQrDialog({
+      title: "QR tham gia ứng dụng",
+      url: url.toString(),
+    });
+  };
+
+  // QR mở đúng POI được chọn.
+  const handleOpenPoiQr = (poi) => {
+    if (poi?.id == null) {
+      console.error("POI chưa có ID hợp lệ.");
+      return;
+    }
+
+    const url = new URL(window.location.href);
+
+    url.searchParams.set("poi", String(poi.id));
+    url.hash = "";
+
+    setQrDialog({
+      title: "QR địa điểm",
+      url: url.toString(),
+    });
   };
 
   return (
@@ -189,9 +243,15 @@ function MapApp() {
           handleLanguageChange
         }
         languageError={languageError}
+        onGetAppQr={handleOpenAppQr}
       />
 
-      <main className="main-layout">
+      <main
+      className={`main-layout ${
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
+      }`}
+      >
+      <aside className="sidebar-shell">
         <DiscoveryPanel
           filteredPois={filteredPois}
           categories={categories}
@@ -209,35 +269,113 @@ function MapApp() {
           onSelectPoi={handleSelectPoi}
         />
 
-        <section className="map-area">
-          <MapStatus
-            loading={isLoadingPois}
-            error={poiLoadError}
-            language={language}
-          />
+        <button
+          type="button"
+          className="sidebar-toggle"
+          onClick={() =>
+            setIsSidebarCollapsed((previous) => !previous)
+          }
+          aria-label={
+            isSidebarCollapsed
+              ? "Mở sidebar"
+              : "Thu gọn sidebar"
+          }
+          aria-expanded={!isSidebarCollapsed}
+          title={
+            isSidebarCollapsed
+              ? "Mở sidebar"
+              : "Thu gọn sidebar"
+          }
+        >
+          {isSidebarCollapsed ? ">" : "<"}
+        </button>
+      </aside>
 
-          {!isLoadingPois && !poiLoadError && (
-            <>
-              <MapView
-                pois={pois}
+      <section
+        className={`map-area ${
+          isPoiDetailsOpen ? "has-selected-poi" : ""
+        }`}
+      >
+        <MapStatus
+          loading={isLoadingPois}
+          error={poiLoadError}
+          language={language}
+        />
+
+        {!isLoadingPois && !poiLoadError && (
+          <>
+            <MapView
+              pois={pois}
+              selectedPoi={selectedPoi}
+              language={language}
+              onSelectPoi={handleSelectPoi}
+            />
+
+            {isPoiDetailsOpen && (
+              <SelectedPoiPanel
+                key={`${selectedPoi?.id}-${language}`}
                 selectedPoi={selectedPoi}
                 language={language}
-                onSelectPoi={handleSelectPoi}
+                speechLanguage={speechLanguage}
+                onClose={handleClosePoi}
+                onGetPoiQr={handleOpenPoiQr}
               />
+            )}
+          </>
+        )}
+      </section>
+          </main>
 
-              {isPoiDetailsOpen && (
-                <SelectedPoiPanel
-                  key={`${selectedPoi?.id}-${language}`}
-                  selectedPoi={selectedPoi}
-                  language={language}
-                  speechLanguage={speechLanguage}
-                  onClose={handleClosePoi}
-                />
-              )}
-            </>
-          )}
-        </section>
-      </main>
+      {qrDialog && (
+        <div
+          className="qr-modal-backdrop"
+          onClick={() => setQrDialog(null)}
+        >
+          <section
+            className="qr-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={qrDialog.title}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="qr-modal-close"
+              onClick={() => setQrDialog(null)}
+              aria-label="Đóng QR"
+            >
+              ×
+            </button>
+
+            <h2>{qrDialog.title}</h2>
+
+            <div className="qr-code-container">
+              <QRCodeSVG
+                value={qrDialog.url}
+                size={240}
+                level="H"
+                includeMargin
+              />
+            </div>
+
+            <p>
+              Quét mã QR.
+            </p>
+
+            <button
+              type="button"
+              className="qr-copy-button"
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  qrDialog.url
+                );
+              }}
+            >
+              Sao chép đường dẫn
+            </button>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
