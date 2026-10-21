@@ -30,3 +30,7 @@ Mô tả: Thêm mục Tổng quan vào menu và mở mục này đầu tiên t�
 [ADMIN-DASH-007] Giao diện Dashboard và bố cục co giãn
 Tệp: web-app/src/pages/AdminPage.css
 Mô tả: Kiểu cho thẻ thống kê, danh sách chờ duyệt và bố cục desktop/mobile.
+
+[CORS-001] Cho phép frontend production gọi backend
+Tệp: backend/app/main.py
+Mô tả: Whitelist domain Netlify production và giữ các origin local/được cấu hình qua FRONTEND_ORIGINS.

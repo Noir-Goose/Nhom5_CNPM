@@ -20,14 +20,21 @@ load_dotenv(BACKEND_DIR / ".env")
 
 MONGODB_URI = os.getenv("MONGODB_URI", "").strip()
 MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "q4_food_guide").strip()
-FRONTEND_ORIGINS = [
+CONFIGURED_FRONTEND_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
         "FRONTEND_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173",
+        "",
     ).split(",")
     if origin.strip()
 ]
+# [CORS-001] Cho phép site Netlify production cùng các origin cấu hình theo môi trường.
+FRONTEND_ORIGINS = list(dict.fromkeys([
+    "https://foodmapnhom5.netlify.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    *CONFIGURED_FRONTEND_ORIGINS,
+]))
 
 client: MongoClient | None = None
 database: Any = None
