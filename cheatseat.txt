@@ -1,0 +1,32 @@
+CHEATSEAT - TRA CỨU TÍNH NĂNG
+================================
+
+Tìm mã trong VS Code bằng Ctrl+Shift+F. Các mã này được đặt ngay cạnh code của tính năng tương ứng.
+
+[ADMIN-DASH-001] Dashboard quản trị tổng quan
+Tệp: web-app/src/components/admin/AdminDashboard.jsx
+Mô tả: Gom dữ liệu POI, tài khoản, đăng ký chủ địa điểm chờ duyệt và POI chờ duyệt bằng các API Admin hiện có.
+
+[ADMIN-DASH-002] Tải lại dữ liệu Dashboard
+Tệp: web-app/src/components/admin/AdminDashboard.jsx
+Mô tả: Promise.all gọi API thống kê và cập nhật trạng thái tải/lỗi.
+
+[ADMIN-DASH-003] Tự nạp Dashboard khi mở trang
+Tệp: web-app/src/components/admin/AdminDashboard.jsx
+Mô tả: useEffect gọi hàm tải dữ liệu khi trang tổng quan được mở.
+
+[ADMIN-DASH-004] Thẻ số liệu nhanh
+Tệp: web-app/src/components/admin/AdminDashboard.jsx
+Mô tả: Hiển thị tổng số POI, tài khoản, đăng ký chủ địa điểm chờ duyệt và địa điểm chờ duyệt.
+
+[ADMIN-DASH-005] Hàng chờ và lối tắt quản trị
+Tệp: web-app/src/components/admin/AdminDashboard.jsx
+Mô tả: Xem một vài yêu cầu mới nhất và chuyển nhanh đến quản lý đăng ký hoặc POI.
+
+[ADMIN-DASH-006] Dashboard là trang Admin mặc định
+Tệp: web-app/src/pages/AdminPage.jsx
+Mô tả: Thêm mục Tổng quan vào menu và mở mục này đầu tiên tại /admin.
+
+[ADMIN-DASH-007] Giao diện Dashboard và bố cục co giãn
+Tệp: web-app/src/pages/AdminPage.css
+Mô tả: Kiểu cho thẻ thống kê, danh sách chờ duyệt và bố cục desktop/mobile.

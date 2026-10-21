@@ -8,8 +8,14 @@ import {
 import "./AdminPage.css";
 import AdminPoiManagement from "../components/admin/poi/AdminPoiManagement";
 import AdminUserManagement from "../components/admin/users/AdminUserManagement";
+import AdminDashboard from "../components/admin/AdminDashboard";
 
 const menuItems = [
+  {
+    id: "dashboard",
+    icon: "📊",
+    label: "Tổng quan",
+  },
   {
     id: "access-verification",
     icon: "🛡️",
@@ -34,7 +40,8 @@ const registrationStatuses = [
 ];
 
 function AdminPage() {
-  const [activeMenu, setActiveMenu] = useState("access-verification");
+  // [ADMIN-DASH-006] Mở Dashboard tổng quan làm màn hình đầu tiên của Admin.
+  const [activeMenu, setActiveMenu] = useState("dashboard");
   const [registrationStatus, setRegistrationStatus] = useState("pending");
   const [registrations, setRegistrations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -203,7 +210,9 @@ function AdminPage() {
         </header>
 
         <main className="admin-content">
-          {activeMenu === "poi-management" ? (
+          {activeMenu === "dashboard" ? (
+            <AdminDashboard onNavigate={setActiveMenu} />
+          ) : activeMenu === "poi-management" ? (
             <AdminPoiManagement />
           ) : activeMenu === "user-management" ? (
             <AdminUserManagement />
