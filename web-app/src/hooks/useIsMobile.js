@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 export default function useIsMobile(query = "(max-width: 760px)") {
@@ -9,7 +10,6 @@ export default function useIsMobile(query = "(max-width: 760px)") {
     const mql = window.matchMedia(query);
     const onChange = (event) => setMatches(event.matches);
 
-    setMatches(mql.matches);
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
   }, [query]);
