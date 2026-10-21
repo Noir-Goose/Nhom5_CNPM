@@ -1378,3 +1378,390 @@ body,
   flex-shrink: 0;
   margin-top: 0;
 }
+
+/* ==========================================
+   MOBILE UI KIỂU GOOGLE MAPS
+   (thêm cuối App.css)
+========================================== */
+@media (max-width: 760px) {
+  html,
+  body {
+    overscroll-behavior-y: none; /* chống kéo-để-refresh làm hỏng thao tác kéo thẻ */
+  }
+
+  /* Chiều cao bar dưới (gồm vùng an toàn iPhone). Có thẻ POI thì bar ẩn => 0 */
+  .map-app {
+    --bottom-bar-h: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .map-app.has-poi-sheet {
+    --bottom-bar-h: 0px;
+  }
+
+  /* ---------- Bản đồ full màn hình ---------- */
+  .main-layout {
+    display: block;
+    position: relative;
+  }
+
+  .map-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .leaflet-control-zoom {
+    display: none; /* dùng 2 ngón để zoom, tránh đè thanh tìm kiếm */
+  }
+
+  .leaflet-bottom {
+    bottom: var(--bottom-bar-h); /* giữ attribution OSM không bị bar che */
+  }
+
+  /* ---------- Thanh tìm kiếm + categories nổi trên map ---------- */
+  .sidebar-toggle {
+    display: none;
+  }
+
+  .sidebar-shell {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1300;
+    width: auto;
+    height: auto;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 10px 0;
+    pointer-events: none; /* vùng trống vẫn kéo được map */
+    transition:
+      transform 0.25s ease,
+      opacity 0.2s ease;
+  }
+
+  .sidebar-shell.hide-on-sheet {
+    opacity: 0;
+    transform: translateY(-130%);
+  }
+
+  .sidebar-shell > .discovery-panel {
+    gap: 8px;
+    height: auto;
+    max-height: none;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    pointer-events: none;
+  }
+
+  .discovery-header {
+    display: none;
+  }
+
+  /* Ô tìm kiếm */
+  .discovery-panel > .search-box {
+    min-height: 50px;
+    padding: 0 14px;
+    background: #fff;
+    border: 0;
+    border-radius: 26px;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 22%);
+    pointer-events: auto;
+  }
+
+  .search-box input,
+  .discovery-panel .search-box input {
+    font-size: 16px; /* >=16px để iOS không tự zoom khi focus */
+  }
+
+  /* Categories: 1 hàng, tự cuộn ngang khi tràn. Nếu đủ chỗ thì không cuộn. */
+  .discovery-panel > .category-list,
+  .discovery-panel > .category-filters,
+  .discovery-panel > .category-buttons,
+  .discovery-panel > .filter-buttons {
+    flex-wrap: nowrap;
+    margin: 0 -10px;
+    padding: 2px 10px 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    pointer-events: auto;
+  }
+
+  .discovery-panel > .category-list::-webkit-scrollbar,
+  .discovery-panel > .category-filters::-webkit-scrollbar,
+  .discovery-panel > .category-buttons::-webkit-scrollbar,
+  .discovery-panel > .filter-buttons::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-list .category-chip,
+  .category-filters button,
+  .category-buttons button,
+  .filter-buttons button {
+    flex: 0 0 auto;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 20%);
+  }
+
+  /* ---------- Danh sách POI: chỉ hiện khi focus ô tìm kiếm ---------- */
+  .discovery-panel .poi-list,
+  .discovery-panel .discovery-list,
+  .discovery-panel > .empty-state {
+    display: none;
+  }
+
+  /* Khi focus: ẩn categories, danh sách dính liền thanh tìm kiếm */
+  .sidebar-shell.search-focused .discovery-panel {
+    gap: 0;
+  }
+
+  .sidebar-shell.search-focused .discovery-panel > .category-list,
+  .sidebar-shell.search-focused .discovery-panel > .category-filters,
+  .sidebar-shell.search-focused .discovery-panel > .category-buttons,
+  .sidebar-shell.search-focused .discovery-panel > .filter-buttons {
+    display: none;
+  }
+
+  .sidebar-shell.search-focused .discovery-panel > .search-box {
+    border-radius: 26px 26px 0 0;
+    box-shadow: 0 -2px 10px rgb(0 0 0 / 14%);
+  }
+
+  .sidebar-shell.search-focused .discovery-panel .poi-list,
+  .sidebar-shell.search-focused .discovery-panel .discovery-list,
+  .sidebar-shell.search-focused .discovery-panel > .empty-state {
+    display: flex;
+    flex: none;
+    max-height: 45dvh; /* chừa chỗ cho bàn phím */
+    margin: 0;
+    padding: 12px 10px 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: #fff;
+    border: 0;
+    border-top: 1px solid #eef1ee;
+    border-radius: 0 0 22px 22px;
+    box-shadow: 0 8px 16px rgb(0 0 0 / 22%);
+    pointer-events: auto;
+  }
+
+  /* Nếu .poi-list nằm trong .discovery-list thì chỉ lớp ngoài có khung */
+  .sidebar-shell.search-focused .discovery-panel .discovery-list > .poi-list {
+    max-height: none;
+    padding: 0;
+    overflow: visible;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  /* ---------- Bar header gọn ở đáy (khi chưa chọn POI) ---------- */
+  .top-bar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1100;
+    align-items: center;
+    gap: 10px;
+    height: var(--bottom-bar-h);
+    min-height: 0;
+    padding: 6px 12px env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid var(--border);
+    border-bottom: 0;
+    box-shadow: 0 -2px 12px rgb(0 0 0 / 8%);
+  }
+
+  .map-app.has-poi-sheet .top-bar {
+    display: none; /* chọn POI => ẩn bar, nhường chỗ cho thẻ kéo */
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .brand-icon {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .brand h1,
+  .brand-text h1 {
+    overflow: hidden;
+    font-size: 15px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .brand span,
+  .brand-text span {
+    display: none;
+  }
+
+  .header-language {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .header-language-actions {
+    flex-wrap: nowrap;
+  }
+
+  .header-language select,
+  .top-bar select {
+    min-width: 88px;
+    min-height: 38px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .get-app-qr-button {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .language-error {
+    position: absolute;
+    right: 12px;
+    bottom: calc(100% + 8px);
+    max-width: calc(100% - 24px);
+    padding: 6px 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+  }
+
+  /* ---------- Nút lấy vị trí: hình tròn màu trong ô vuông trắng ---------- */
+  .map-toolbar {
+    top: auto;
+    right: 12px;
+    /* bám theo mép trên thẻ POI; thẻ cao quá 40% màn hình thì thẻ che nút */
+    bottom: calc(
+      var(--bottom-bar-h) + min(var(--sheet-h, 0px), 40dvh) + 12px
+    );
+    transition: bottom 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .map-area.is-sheet-dragging .map-toolbar {
+    transition: none;
+  }
+
+  .map-toolbar button,
+  .locate-button {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    min-height: 0;
+    padding: 0;
+    color: transparent;
+    font-size: 0;
+    line-height: 0;
+    background: #fff;
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 25%);
+  }
+
+  .map-toolbar button > *,
+  .locate-button > * {
+    display: none; /* ẩn chữ/icon cũ bên trong */
+  }
+
+  .map-toolbar button::after,
+  .locate-button::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background: #1a73e8;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgb(26 115 232 / 25%);
+    transform: translate(-50%, -50%);
+  }
+
+  .nearby-pois,
+  .location-error {
+    bottom: calc(var(--bottom-bar-h) + 10px);
+  }
+
+  /* ---------- Thẻ POI kéo lên xuống ---------- */
+  .poi-sheet {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 24px rgb(0 0 0 / 18%);
+    touch-action: none;
+    will-change: transform;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .poi-sheet.is-dragging {
+    transition: none;
+  }
+
+  .poi-sheet-grip {
+    display: flex;
+    flex: 0 0 28px; /* khớp GRIP_HEIGHT trong PoiBottomSheet.jsx */
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+  }
+
+  .poi-sheet-grip span {
+    width: 40px;
+    height: 4px;
+    background: #cfd6d0;
+    border-radius: 2px;
+  }
+
+  .poi-sheet-body {
+    flex: 1 1 0;
+    min-height: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  /* Chỉ khi kéo hết cỡ mới cuộn nội dung bên trong */
+  .poi-sheet.is-full .poi-sheet-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  /* Ở mốc cao nhất, kéo ở phần tiêu đề vẫn hạ được thẻ xuống */
+  .poi-sheet.is-full .selected-poi-heading {
+    touch-action: none;
+  }
+
+  /* Bỏ kiểu "thẻ nổi góc dưới" cũ của .selected-poi khi nằm trong sheet */
+  .poi-sheet .selected-poi {
+    position: static;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    padding: 0 16px 24px;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+}
