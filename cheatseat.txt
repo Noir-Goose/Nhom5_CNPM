@@ -5,7 +5,7 @@ Tìm mã trong VS Code bằng Ctrl+Shift+F. Các mã này được đặt ngay c
 
 [ADMIN-DASH-001] Dashboard quản trị tổng quan
 Tệp: web-app/src/components/admin/AdminDashboard.jsx
-Mô tả: Gom dữ liệu POI, tài khoản, đăng ký chủ địa điểm chờ duyệt và POI chờ duyệt bằng các API Admin hiện có.
+Mô tả: requestDashboardData gom dữ liệu POI, tài khoản và các yêu cầu chờ duyệt bằng API Admin hiện có; component dựng trang tổng quan.
 
 [ADMIN-DASH-002] Tải lại dữ liệu Dashboard
 Tệp: web-app/src/components/admin/AdminDashboard.jsx
@@ -13,7 +13,7 @@ Mô tả: Promise.all gọi API thống kê và cập nhật trạng thái tải
 
 [ADMIN-DASH-003] Tự nạp Dashboard khi mở trang
 Tệp: web-app/src/components/admin/AdminDashboard.jsx
-Mô tả: useEffect gọi hàm tải dữ liệu khi trang tổng quan được mở.
+Mô tả: useEffect nhận kết quả bất đồng bộ rồi cập nhật state; bỏ cập nhật nếu component đã đóng.
 
 [ADMIN-DASH-004] Thẻ số liệu nhanh
 Tệp: web-app/src/components/admin/AdminDashboard.jsx

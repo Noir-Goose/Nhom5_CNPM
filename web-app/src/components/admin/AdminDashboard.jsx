@@ -10,6 +10,23 @@ const initialData = {
   users: [],
 };
 
+// [ADMIN-DASH-001] Lấy và chuẩn hóa dữ liệu Dashboard từ các API Admin.
+async function requestDashboardData() {
+  const [pendingOwners, pendingSubmissions, pois, users] = await Promise.all([
+    getPoiOwnerRegistrations("pending"),
+    getPoiSubmissions("pending"),
+    getSystemPois(),
+    getUsers(),
+  ]);
+
+  return {
+    pendingOwners: Array.isArray(pendingOwners) ? pendingOwners : [],
+    pendingSubmissions: Array.isArray(pendingSubmissions) ? pendingSubmissions : [],
+    pois: Array.isArray(pois) ? pois : [],
+    users: Array.isArray(users) ? users : [],
+  };
+}
+
 // [ADMIN-DASH-001] Tổng hợp số liệu tổng quan từ các API quản trị hiện có.
 function AdminDashboard({ onNavigate }) {
   const [data, setData] = useState(initialData);
@@ -22,19 +39,7 @@ function AdminDashboard({ onNavigate }) {
     setError("");
 
     try {
-      const [pendingOwners, pendingSubmissions, pois, users] = await Promise.all([
-        getPoiOwnerRegistrations("pending"),
-        getPoiSubmissions("pending"),
-        getSystemPois(),
-        getUsers(),
-      ]);
-
-      setData({
-        pendingOwners: Array.isArray(pendingOwners) ? pendingOwners : [],
-        pendingSubmissions: Array.isArray(pendingSubmissions) ? pendingSubmissions : [],
-        pois: Array.isArray(pois) ? pois : [],
-        users: Array.isArray(users) ? users : [],
-      });
+      setData(await requestDashboardData());
     } catch (loadError) {
       setError(loadError.message || "Không thể tải dữ liệu tổng quan.");
     } finally {
@@ -43,9 +48,27 @@ function AdminDashboard({ onNavigate }) {
   }, []);
 
   useEffect(() => {
-    // [ADMIN-DASH-003] Tự nạp số liệu khi Admin mở trang tổng quan.
-    loadDashboard();
-  }, [loadDashboard]);
+    // [ADMIN-DASH-003] Tự nạp dữ liệu; cập nhật state sau khi request bất đồng bộ hoàn tất.
+    let isActive = true;
+
+    requestDashboardData()
+      .then((dashboardData) => {
+        if (isActive) {
+          setData(dashboardData);
+          setError("");
+        }
+      })
+      .catch((loadError) => {
+        if (isActive) setError(loadError.message || "Không thể tải dữ liệu tổng quan.");
+      })
+      .finally(() => {
+        if (isActive) setIsLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const cards = [
     { icon: "📍", label: "Địa điểm trong hệ thống", value: data.pois.length, tone: "green" },
