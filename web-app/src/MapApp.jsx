@@ -15,6 +15,8 @@ import DiscoveryPanel from "./components/DiscoveryPanel";
 import MapStatus from "./components/map/MapStatus";
 import MapView from "./components/map/MapView";
 import SelectedPoiPanel from "./components/SelectedPoiPanel";
+import PoiBottomSheet from "./components/PoiBottomSheet";
+import useIsMobile from "./hooks/useIsMobile";
 
 import { saveLanguage } from "./services/languageService";
 import { loadPois } from "./services/poiService";
@@ -38,7 +40,15 @@ function MapApp() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] =
   useState(false);
 
-  const [qrDialog, setQrDialog] = useState(null);
+    const [qrDialog, setQrDialog] = useState(null);
+
+  // Mobile: chế độ giao diện, trạng thái focus ô tìm kiếm, chiều cao thẻ POI
+  const isMobile = useIsMobile();
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [sheetLayout, setSheetLayout] = useState({
+    height: 0,
+    dragging: false,
+  });
   
   // =========================
   // App / UI state
@@ -190,11 +200,39 @@ function MapApp() {
   // =========================
   // Select POI
   // =========================
-  const handleSelectPoi = (poi) => {
+    const handleSelectPoi = (poi) => {
     window.speechSynthesis?.cancel();
 
     setSelectedPoi(poi);
     setIsPoiDetailsOpen(true);
+
+    // Đóng dropdown POI và hạ bàn phím
+        // Chỉ áp dụng trên mobile: đóng dropdown POI và hạ bàn phím
+    if (isMobile) {
+      setIsSearchFocused(false);
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }
+  };
+
+  // Focus vào ô input => hiện danh sách POI (chỉ có tác dụng trên mobile)
+  const handleSidebarFocus = (event) => {
+    if (event.target.tagName === "INPUT") {
+      setIsSearchFocused(true);
+    }
+  };
+
+  // Rời khỏi sidebar => đóng danh sách.
+  // Trễ 150ms để lần bấm vào POI trong danh sách kịp được xử lý.
+  const handleSidebarBlur = (event) => {
+    const shell = event.currentTarget;
+
+    setTimeout(() => {
+      if (!shell.contains(document.activeElement)) {
+        setIsSearchFocused(false);
+      }
+    }, 150);
   };
 
   const handleClosePoi = () => {
@@ -234,8 +272,29 @@ function MapApp() {
     });
   };
 
+   // Thẻ kéo lên cao => ẩn thanh tìm kiếm + categories
+  const isSheetHigh =
+    isMobile &&
+    isPoiDetailsOpen &&
+    sheetLayout.height >= window.innerHeight * 0.6;
+
+  const selectedPoiPanel = isPoiDetailsOpen ? (
+    <SelectedPoiPanel
+      key={`${selectedPoi?.id}-${language}`}
+      selectedPoi={selectedPoi}
+      language={language}
+      speechLanguage={speechLanguage}
+      onClose={handleClosePoi}
+      onGetPoiQr={handleOpenPoiQr}
+    />
+  ) : null;
+
   return (
-    <div className="map-app">
+    <div
+      className={`map-app ${
+        isMobile && isPoiDetailsOpen ? "has-poi-sheet" : ""
+      }`}
+    >
       <AppHeader
         language={language}
         languages={languages}
@@ -247,11 +306,17 @@ function MapApp() {
       />
 
       <main
-      className={`main-layout ${
-        isSidebarCollapsed ? "sidebar-collapsed" : ""
-      }`}
+        className={`main-layout ${
+          isSidebarCollapsed && !isMobile ? "sidebar-collapsed" : ""
+        }`}
       >
-      <aside className="sidebar-shell">
+      <aside
+        className={`sidebar-shell ${
+          isSearchFocused ? "search-focused" : ""
+        } ${isSheetHigh ? "hide-on-sheet" : ""}`}
+        onFocus={handleSidebarFocus}
+        onBlur={handleSidebarBlur}
+      >
         <DiscoveryPanel
           filteredPois={filteredPois}
           categories={categories}
@@ -294,7 +359,8 @@ function MapApp() {
       <section
         className={`map-area ${
           isPoiDetailsOpen ? "has-selected-poi" : ""
-        }`}
+        } ${sheetLayout.dragging ? "is-sheet-dragging" : ""}`}
+        style={{ "--sheet-h": `${sheetLayout.height}px` }}
       >
         <MapStatus
           loading={isLoadingPois}
@@ -311,15 +377,15 @@ function MapApp() {
               onSelectPoi={handleSelectPoi}
             />
 
-            {isPoiDetailsOpen && (
-              <SelectedPoiPanel
-                key={`${selectedPoi?.id}-${language}`}
-                selectedPoi={selectedPoi}
-                language={language}
-                speechLanguage={speechLanguage}
-                onClose={handleClosePoi}
-                onGetPoiQr={handleOpenPoiQr}
-              />
+            {isMobile && selectedPoiPanel ? (
+              <PoiBottomSheet
+                resetKey={`${selectedPoi?.id}-${language}`}
+                onLayoutChange={setSheetLayout}
+              >
+                {selectedPoiPanel}
+              </PoiBottomSheet>
+            ) : (
+              selectedPoiPanel
             )}
           </>
         )}
