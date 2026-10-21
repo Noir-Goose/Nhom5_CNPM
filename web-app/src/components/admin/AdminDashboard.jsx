@@ -2,21 +2,27 @@ import { useCallback, useEffect, useState } from "react";
 import { getPoiOwnerRegistrations } from "../../services/adminService";
 import { getPoiSubmissions, getSystemPois } from "../../services/adminPoiService";
 import { getUsers } from "../../services/adminUserService";
+import { getTourAnalytics } from "../../services/tourAnalyticsService";
 
 const initialData = {
   pendingOwners: [],
   pendingSubmissions: [],
   pois: [],
   users: [],
+  tourAnalytics: null,
+  tourAnalyticsError: "",
 };
 
 // [ADMIN-DASH-001] Lấy và chuẩn hóa dữ liệu Dashboard từ các API Admin.
 async function requestDashboardData() {
-  const [pendingOwners, pendingSubmissions, pois, users] = await Promise.all([
+  const [pendingOwners, pendingSubmissions, pois, users, analyticsResult] = await Promise.all([
     getPoiOwnerRegistrations("pending"),
     getPoiSubmissions("pending"),
     getSystemPois(),
     getUsers(),
+    getTourAnalytics(30)
+      .then((tourAnalytics) => ({ tourAnalytics, tourAnalyticsError: "" }))
+      .catch((error) => ({ tourAnalytics: null, tourAnalyticsError: error.message })),
   ]);
 
   return {
@@ -24,6 +30,7 @@ async function requestDashboardData() {
     pendingSubmissions: Array.isArray(pendingSubmissions) ? pendingSubmissions : [],
     pois: Array.isArray(pois) ? pois : [],
     users: Array.isArray(users) ? users : [],
+    ...analyticsResult,
   };
 }
 
@@ -76,6 +83,10 @@ function AdminDashboard({ onNavigate }) {
     { icon: "🪪", label: "Chủ địa điểm chờ duyệt", value: data.pendingOwners.length, tone: "orange" },
     { icon: "📝", label: "Địa điểm chờ duyệt", value: data.pendingSubmissions.length, tone: "purple" },
   ];
+  const analytics = data.tourAnalytics;
+  const dailyActivity = analytics?.daily?.slice(-14) ?? [];
+  const maxDailyStarts = Math.max(1, ...dailyActivity.map((day) => day.starts));
+  const languageLabels = { vi: "Tiếng Việt", en: "English", zh: "中文", ja: "日本語", ko: "한국어" };
 
   return (
     <section className="admin-dashboard">
@@ -137,6 +148,72 @@ function AdminDashboard({ onNavigate }) {
           <button className="dashboard-link-button" type="button" onClick={() => onNavigate("poi-management")}>Mở quản lý POI <span aria-hidden="true">→</span></button>
         </section>
       </div>
+
+      {/* [TOUR-AN-006] Thống kê lượt nghe, hoàn thành, ngôn ngữ và POI phổ biến 30 ngày. */}
+      <section className="admin-card tour-analytics-card">
+        <div className="admin-card-heading tour-analytics-heading">
+          <div>
+            <span className="admin-eyebrow">TRẢI NGHIỆM DU KHÁCH · 30 NGÀY</span>
+            <h2>Thuyết minh bằng giọng đọc</h2>
+            <p>Số liệu tổng hợp ẩn danh từ các lượt nghe trên website.</p>
+          </div>
+          <span className="tour-analytics-range">30 ngày gần nhất</span>
+        </div>
+
+        {data.tourAnalyticsError && (
+          <p className="tour-analytics-notice" role="status">
+            Thống kê trải nghiệm sẽ hiển thị sau khi backend cập nhật xong.
+          </p>
+        )}
+
+        <div className="tour-analytics-metrics">
+          <article><span>Lượt bắt đầu</span><strong>{isLoading || !analytics ? "—" : analytics.summary.starts}</strong></article>
+          <article><span>Nghe hoàn tất</span><strong>{isLoading || !analytics ? "—" : analytics.summary.completions}</strong></article>
+          <article><span>Tỷ lệ hoàn tất</span><strong>{isLoading || !analytics ? "—" : `${analytics.summary.completionRate}%`}</strong></article>
+          <article><span>Thời lượng TB</span><strong>{isLoading || !analytics ? "—" : `${analytics.summary.averageDurationSeconds}s`}</strong></article>
+        </div>
+
+        <div className="tour-analytics-detail-grid">
+          <section className="tour-analytics-subsection">
+            <h3>Hoạt động theo ngày</h3>
+            {dailyActivity.length ? (
+              <div className="tour-daily-list">
+                {dailyActivity.map((day) => (
+                  <div className="tour-daily-row" key={day.date}>
+                    <time dateTime={day.date}>{new Date(`${day.date}T00:00:00`).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })}</time>
+                    <div className="tour-daily-bars" aria-label={`${day.starts} lượt bắt đầu, ${day.completions} lượt hoàn tất`}>
+                      <span className="tour-daily-bar starts" style={{ width: `${Math.max(day.starts ? 4 : 0, day.starts / maxDailyStarts * 100)}%` }} title={`${day.starts} lượt bắt đầu`} />
+                      <span className="tour-daily-bar completions" style={{ width: `${Math.max(day.completions ? 4 : 0, day.completions / maxDailyStarts * 100)}%` }} title={`${day.completions} lượt hoàn tất`} />
+                    </div>
+                    <span className="tour-daily-count">{day.starts}</span>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="tour-analytics-empty">{isLoading ? "Đang tải thống kê..." : data.tourAnalyticsError ? "Chưa khả dụng ở backend hiện tại." : "Chưa có lượt nghe được ghi nhận."}</p>}
+            <div className="tour-chart-legend"><span><i className="starts" />Bắt đầu</span><span><i className="completions" />Hoàn tất</span></div>
+          </section>
+
+          <section className="tour-analytics-subsection">
+            <h3>Địa điểm được nghe nhiều</h3>
+            {analytics?.topPois?.length ? (
+              <ol className="tour-ranking-list">
+                {analytics.topPois.map((poi, index) => (
+                  <li key={poi.poiId}><span className="tour-ranking-index">{index + 1}</span><span className="tour-ranking-name">{poi.name}</span><strong>{poi.count}</strong></li>
+                ))}
+              </ol>
+            ) : <p className="tour-analytics-empty">{isLoading ? "Đang tải thống kê..." : data.tourAnalyticsError ? "Chưa khả dụng ở backend hiện tại." : "Chưa có dữ liệu địa điểm."}</p>}
+
+            <h3 className="tour-language-title">Ngôn ngữ thuyết minh</h3>
+            {analytics?.languages?.length ? (
+              <ul className="tour-language-list">
+                {analytics.languages.map((item) => (
+                  <li key={item.language}><span>{languageLabels[item.language] || item.language}</span><strong>{item.count}</strong></li>
+                ))}
+              </ul>
+            ) : <p className="tour-analytics-empty">{data.tourAnalyticsError ? "Chưa khả dụng ở backend hiện tại." : "Chưa có ngôn ngữ được ghi nhận."}</p>}
+          </section>
+        </div>
+      </section>
     </section>
   );
 }

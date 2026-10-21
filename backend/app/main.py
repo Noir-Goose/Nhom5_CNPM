@@ -15,6 +15,7 @@ from app.admin.router import router as admin_router
 from app.admin.users_router import router as admin_users_router
 from app.auth.router import router as auth_router
 from app.admin.poi_router import router as admin_poi_router
+from app.analytics import router as analytics_router
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_DIR / ".env")
 
@@ -76,6 +77,11 @@ async def lifespan(app: FastAPI):
         client.admin.command("ping")
         database = client[MONGODB_DB_NAME]
         app.state.database = database
+        # [TOUR-AN-007] Index timestamp; thiếu quyền index không được làm backend ngừng khởi động.
+        try:
+            database["tour_analytics"].create_index("createdAt")
+        except PyMongoError as index_error:
+            print(f"Could not create tour analytics index: {index_error}")
         seed_initial_pois()
         print(f"Connected to MongoDB database: {MONGODB_DB_NAME}")
     except Exception:
@@ -106,6 +112,7 @@ app.include_router(poi_owner_router)
 app.include_router(admin_router)
 app.include_router(admin_users_router)
 app.include_router(owner_notifications_router)
+app.include_router(analytics_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_ORIGINS,

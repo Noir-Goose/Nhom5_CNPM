@@ -34,3 +34,35 @@ Mô tả: Kiểu cho thẻ thống kê, danh sách chờ duyệt và bố cục 
 [CORS-001] Cho phép frontend production gọi backend
 Tệp: backend/app/main.py
 Mô tả: Whitelist domain Netlify production và giữ các origin local/được cấu hình qua FRONTEND_ORIGINS.
+
+[TOUR-AN-001] Ghi nhận lượt bắt đầu/kết thúc thuyết minh
+Tệp: backend/app/analytics.py
+Mô tả: Endpoint công khai lưu sự kiện ẩn danh cho POI hợp lệ, giới hạn ngôn ngữ và thời lượng.
+
+[TOUR-AN-002] Tổng hợp thống kê tour cho Admin
+Tệp: backend/app/analytics.py
+Mô tả: API bảo vệ bằng quyền Admin, trả lượt bắt đầu/hoàn tất, tỷ lệ hoàn tất, thời lượng trung bình, địa điểm/ngôn ngữ phổ biến và hoạt động theo ngày trong 7–90 ngày.
+
+[TOUR-AN-003] Gửi sự kiện analytics từ frontend
+Tệp: web-app/src/services/tourAnalyticsService.js
+Mô tả: Gửi event ẩn danh và giữ lỗi analytics tách khỏi trải nghiệm phát thuyết minh.
+
+[TOUR-AN-004] Tải thống kê tour trong trang Admin
+Tệp: web-app/src/services/tourAnalyticsService.js
+Mô tả: Gọi API thống kê với access token của Admin.
+
+[TOUR-AN-005] Đo lượt phát giọng đọc trình duyệt
+Tệp: web-app/src/components/AudioPlayer.jsx
+Mô tả: Ghi nhận khi speechSynthesis bắt đầu và hoàn tất; lượt bị dừng không tính là hoàn tất.
+
+[TOUR-AN-006] Khối trải nghiệm thuyết minh trong Dashboard
+Tệp: web-app/src/components/admin/AdminDashboard.jsx
+Mô tả: Hiển thị chỉ số 30 ngày, hoạt động theo ngày, địa điểm được nghe nhiều và ngôn ngữ; thiếu endpoint analytics thì các khối quản trị khác vẫn tải bình thường.
+
+[TOUR-AN-007] Chỉ mục MongoDB cho sự kiện tour
+Tệp: backend/app/main.py
+Mô tả: Tạo index theo createdAt khi backend khởi động để lọc thống kê theo thời gian; lỗi quyền tạo index không chặn backend khởi động.
+
+[TOUR-AN-008] Kiểu biểu đồ analytics
+Tệp: web-app/src/pages/AdminPage.css
+Mô tả: Giao diện co giãn cho biểu đồ lượt nghe và danh sách xếp hạng.

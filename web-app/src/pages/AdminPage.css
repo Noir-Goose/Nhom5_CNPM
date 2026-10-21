@@ -778,6 +778,212 @@
   transform: translateY(1px);
 }
 
+/* [TOUR-AN-008] Biểu đồ trải nghiệm tour thích ứng với chiều rộng Dashboard. */
+.tour-analytics-card {
+  margin-top: 20px;
+}
+
+.tour-analytics-heading {
+  align-items: flex-start;
+}
+
+.tour-analytics-heading h2 {
+  margin: 7px 0 6px;
+}
+
+.tour-analytics-range {
+  flex-shrink: 0;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: #f4f6fa;
+  color: #667085;
+  font-size: 12px;
+}
+
+.tour-analytics-notice {
+  margin: 14px 0 0;
+  padding: 11px 13px;
+  border: 1px solid #f3ddb5;
+  border-radius: 9px;
+  background: #fff9e9;
+  color: #795b1b;
+  font-size: 12px;
+}
+
+.tour-analytics-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.tour-analytics-metrics article {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #edf0f5;
+  border-radius: 11px;
+  background: #fafbfc;
+}
+
+.tour-analytics-metrics span {
+  color: #7c8799;
+  font-size: 12px;
+}
+
+.tour-analytics-metrics strong {
+  color: #27344a;
+  font-size: 23px;
+}
+
+.tour-analytics-detail-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 28px;
+  padding-top: 18px;
+  border-top: 1px solid #edf0f5;
+}
+
+.tour-analytics-subsection {
+  min-width: 0;
+}
+
+.tour-analytics-subsection h3 {
+  margin: 0 0 15px;
+  color: #344054;
+  font-size: 14px;
+}
+
+.tour-daily-list {
+  display: grid;
+  gap: 9px;
+}
+
+.tour-daily-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 10px;
+}
+
+.tour-daily-row time,
+.tour-daily-count {
+  color: #7c8799;
+  font-size: 11px;
+}
+
+.tour-daily-count {
+  text-align: right;
+}
+
+.tour-daily-bars {
+  display: grid;
+  gap: 3px;
+}
+
+.tour-daily-bar {
+  display: block;
+  min-width: 0;
+  height: 6px;
+  border-radius: 10px;
+  transition: width 0.25s ease;
+}
+
+.tour-daily-bar.starts,
+.tour-chart-legend i.starts {
+  background: #d97943;
+}
+
+.tour-daily-bar.completions,
+.tour-chart-legend i.completions {
+  background: #45a875;
+}
+
+.tour-chart-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  color: #7c8799;
+  font-size: 11px;
+}
+
+.tour-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tour-chart-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.tour-ranking-list,
+.tour-language-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tour-ranking-list li,
+.tour-language-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f2f5;
+  color: #596579;
+  font-size: 12px;
+}
+
+.tour-ranking-index {
+  display: grid;
+  flex: 0 0 24px;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: #fff1e7;
+  color: #bd5b2c;
+  font-weight: 700;
+}
+
+.tour-ranking-name,
+.tour-language-list span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tour-ranking-list strong,
+.tour-language-list strong {
+  color: #344054;
+}
+
+.tour-language-title {
+  margin-top: 23px !important;
+}
+
+.tour-analytics-empty {
+  min-height: 70px;
+  color: #8791a2;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .tour-analytics-detail-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .tour-analytics-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tour-analytics-heading { flex-direction: column; }
+}
+
 .admin-refresh {
   transition: all 0.2s ease;
 }
