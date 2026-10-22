@@ -796,6 +796,14 @@ select:focus-visible {
   transform: translate(-50%, -50%);
 }
 
+.map-status small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 /* ==========================================
    RESPONSIVE
 ========================================== */
@@ -1599,7 +1607,7 @@ body,
   .map-app {
     --bottom-bar-h: calc(52px + env(safe-area-inset-bottom, 0px));
     /* [MOBILE-006] Dành khoảng trống phía dưới cho huy hiệu Netlify trên mobile. */
-    --bottom-controls-clearance: 100px;
+    --bottom-controls-clearance:0px;
   }
 
   .map-app::after {

@@ -91,3 +91,7 @@ Mô tả: Thu gọn thanh công cụ và bản đồ, cuộn danh sách riêng, 
 Tệp: web-app/src/App.css
 Mô tả: Nâng thanh điều khiển, nút vị trí và thẻ POI khỏi vùng đáy màn hình bị huy hiệu Netlify che.
 Ghi chú: Lớp ::after phủ nền trắng phía sau vùng dưới bản đồ, không chặn thao tác trên nút.
+
+[MAP-001] Hiện bản đồ nền khi API địa điểm lỗi
+Tệp: web-app/src/MapApp.jsx
+Mô tả: MapView luôn được render trong lúc tải hoặc khi backend lỗi; trạng thái lỗi chỉ giải thích rằng danh sách địa điểm chưa tải được.

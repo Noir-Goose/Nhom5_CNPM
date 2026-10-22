@@ -143,7 +143,7 @@ export default function MapView({
   const initialCenter =
     selectedCoordinates ??
     validPois[0]?.coordinates ??
-    [10.7576, 106.0000];
+    [10.7576, 106.7000];
 
   const handleLocate = () => {
     setLocationError("");

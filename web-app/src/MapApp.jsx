@@ -401,29 +401,28 @@ function MapApp() {
           language={language}
         />
 
-        {!isLoadingPois && !poiLoadError && (
-          <>
-            <MapView
-              pois={pois}
-              selectedPoi={selectedPoi}
-              language={language}
-              onSelectPoi={handleSelectPoi}
-            />
+        {/* [MAP-001] Luon hien nen ban do, ke ca khi API POI dang loi hoac dang tai. */}
+        <MapView
+          pois={pois}
+          selectedPoi={selectedPoi}
+          language={language}
+          onSelectPoi={handleSelectPoi}
+        />
 
-            {isMobile && selectedPoiPanel ? (
-              <PoiBottomSheet
-                title={selectedTitle}
-                resetKey={`${selectedPoi?.id}-${language}`}
-                onClose={handleClosePoi}
-                onGetQr={() => handleOpenPoiQr(selectedPoi)}
-                onLayoutChange={setSheetLayout}
-              >
-                {selectedPoiPanel}
-              </PoiBottomSheet>
-            ) : (
-              selectedPoiPanel
-            )}
-          </>
+        {!isLoadingPois && !poiLoadError && (
+          isMobile && selectedPoiPanel ? (
+            <PoiBottomSheet
+              title={selectedTitle}
+              resetKey={`${selectedPoi?.id}-${language}`}
+              onClose={handleClosePoi}
+              onGetQr={() => handleOpenPoiQr(selectedPoi)}
+              onLayoutChange={setSheetLayout}
+            >
+              {selectedPoiPanel}
+            </PoiBottomSheet>
+          ) : (
+            selectedPoiPanel
+          )
         )}
       </section>
           </main>
