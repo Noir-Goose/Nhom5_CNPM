@@ -1599,7 +1599,7 @@ body,
   .map-app {
     --bottom-bar-h: calc(52px + env(safe-area-inset-bottom, 0px));
     /* [MOBILE-006] Dành khoảng trống phía dưới cho huy hiệu Netlify trên mobile. */
-    --bottom-controls-clearance: 140px;
+    --bottom-controls-clearance: 100px;
   }
 
   .map-app.has-poi-sheet {
