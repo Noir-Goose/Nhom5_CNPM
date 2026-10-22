@@ -95,3 +95,7 @@ Ghi chú: Lớp ::after phủ nền trắng phía sau vùng dưới bản đồ,
 [MAP-001] Hiện bản đồ nền khi API địa điểm lỗi
 Tệp: web-app/src/MapApp.jsx
 Mô tả: MapView luôn được render trong lúc tải hoặc khi backend lỗi; trạng thái lỗi chỉ giải thích rằng danh sách địa điểm chưa tải được.
+
+[VERCEL-001] Hỗ trợ mở trực tiếp các trang SPA trên Vercel
+Tệp: web-app/vercel.json
+Mô tả: Rewrite các đường dẫn như /admin và /login về index.html để React xử lý route phía trình duyệt.
