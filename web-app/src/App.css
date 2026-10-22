@@ -1598,6 +1598,8 @@ body,
 
   .map-app {
     --bottom-bar-h: calc(52px + env(safe-area-inset-bottom, 0px));
+    /* [MOBILE-006] Dành khoảng trống phía dưới cho huy hiệu Netlify trên mobile. */
+    --bottom-controls-clearance: 140px;
   }
 
   .map-app.has-poi-sheet {
@@ -1786,7 +1788,7 @@ body,
   .map-app > header {
     position: fixed;
     right: 0;
-    bottom: 0;
+    bottom: var(--bottom-controls-clearance);
     left: 0;
     z-index: 1100;
     align-items: center;
@@ -1870,7 +1872,9 @@ body,
     right: 12px;
     /* bám theo mép thẻ POI; thẻ cao quá 40% màn hình thì thẻ che nút */
     bottom: calc(
-      var(--bottom-bar-h) + min(var(--sheet-h, 0px), 40dvh) + 12px
+      var(--bottom-controls-clearance) +
+      var(--bottom-bar-h) +
+      min(var(--sheet-h, 0px), 40dvh) + 12px
     );
     transition: bottom 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
@@ -1926,19 +1930,20 @@ body,
 
   .nearby-pois,
   .location-error {
-    bottom: calc(var(--bottom-bar-h) + 10px);
+    bottom: calc(var(--bottom-controls-clearance) + var(--bottom-bar-h) + 10px);
   }
 
   /* ---------- Thẻ POI ---------- */
   .poi-sheet {
     position: absolute;
     right: 0;
-    bottom: 0;
+    bottom: var(--bottom-controls-clearance);
     left: 0;
     z-index: 1000;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    max-height: calc(100dvh - var(--bottom-controls-clearance));
     background: #fff;
     border-radius: 20px 20px 0 0;
     box-shadow: 0 -4px 24px rgb(0 0 0 / 18%);

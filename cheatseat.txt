@@ -86,3 +86,7 @@ Mô tả: Kiểu hộp thoại chọn chế độ thiết bị và bộ điều 
 [DEVICE-005] Bố cục điện thoại ưu tiên chiều dọc
 Tệp: web-app/src/App.css
 Mô tả: Thu gọn thanh công cụ và bản đồ, cuộn danh sách riêng, đưa thông tin địa điểm xuống dưới bản đồ.
+
+[MOBILE-006] Chừa khoảng trống cho huy hiệu Netlify
+Tệp: web-app/src/App.css
+Mô tả: Nâng thanh điều khiển, nút vị trí và thẻ POI khỏi vùng đáy màn hình bị huy hiệu Netlify che.
