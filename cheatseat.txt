@@ -66,3 +66,23 @@ Mô tả: Tạo index theo createdAt khi backend khởi động để lọc th�
 [TOUR-AN-008] Kiểu biểu đồ analytics
 Tệp: web-app/src/pages/AdminPage.css
 Mô tả: Giao diện co giãn cho biểu đồ lượt nghe và danh sách xếp hạng.
+
+[DEVICE-001] Hỏi chọn loại thiết bị lần đầu
+Tệp: web-app/src/MapApp.jsx
+Mô tả: Hiện hộp thoại chọn Máy tính hoặc Điện thoại khi người dùng chưa có lựa chọn đã lưu.
+
+[DEVICE-002] Lưu và áp dụng chế độ thiết bị
+Tệp: web-app/src/MapApp.jsx
+Mô tả: Lưu lựa chọn vào localStorage để giữ chế độ hiển thị cho lần truy cập sau.
+
+[DEVICE-003] Đổi chế độ từ header
+Tệp: web-app/src/components/AppHeader.jsx
+Mô tả: Cho phép chuyển Máy tính/Điện thoại mà không cần mở lại hộp thoại.
+
+[DEVICE-004] Giao diện chọn thiết bị
+Tệp: web-app/src/App.css
+Mô tả: Kiểu hộp thoại chọn chế độ thiết bị và bộ điều khiển trong header.
+
+[DEVICE-005] Bố cục điện thoại ưu tiên chiều dọc
+Tệp: web-app/src/App.css
+Mô tả: Thu gọn thanh công cụ và bản đồ, cuộn danh sách riêng, đưa thông tin địa điểm xuống dưới bản đồ.

@@ -1378,3 +1378,208 @@ body,
   flex-shrink: 0;
   margin-top: 0;
 }
+
+/* [DEVICE-004] Lua chon thiet bi lan dau va dieu khien doi che do. */
+.device-mode-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.device-mode-control select {
+  min-width: 112px;
+  min-height: 40px;
+}
+
+.device-mode-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgb(20 30 23 / 55%);
+}
+
+.device-mode-dialog {
+  width: min(480px, 100%);
+  padding: 26px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 24%);
+}
+
+.device-mode-dialog h2 {
+  margin: 9px 0;
+  color: #17251c;
+  font-size: 22px;
+}
+
+.device-mode-dialog > p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.device-mode-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.device-mode-options button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-height: 132px;
+  padding: 15px;
+  color: var(--text);
+  text-align: left;
+  background: #f8faf8;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.device-mode-options button:hover,
+.device-mode-options button:focus-visible {
+  background: var(--green-light);
+  border-color: #85b997;
+}
+
+.device-mode-options button > span { color: var(--green); font-size: 24px; }
+.device-mode-options button small { color: var(--muted); line-height: 1.4; }
+
+/* [DEVICE-005] Che do dien thoai doc, thu gon ban do va dua chi tiet xuong duoi. */
+.map-app[data-device-mode="mobile"] {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+
+.map-app[data-device-mode="mobile"] .top-bar {
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+}
+
+.map-app[data-device-mode="mobile"] .brand { gap: 8px; }
+.map-app[data-device-mode="mobile"] .brand-icon { flex-basis: 38px; width: 38px; height: 38px; }
+.map-app[data-device-mode="mobile"] .brand h1,
+.map-app[data-device-mode="mobile"] .brand-text h1 { font-size: 16px; }
+.map-app[data-device-mode="mobile"] .brand span,
+.map-app[data-device-mode="mobile"] .brand-text span { font-size: 10px; }
+
+.map-app[data-device-mode="mobile"] .header-language-actions {
+  gap: 5px;
+}
+
+.map-app[data-device-mode="mobile"] .device-mode-control > span,
+.map-app[data-device-mode="mobile"] .get-app-qr-button { display: none; }
+
+.map-app[data-device-mode="mobile"] .device-mode-control select,
+.map-app[data-device-mode="mobile"] .header-language select,
+.map-app[data-device-mode="mobile"] .top-bar select {
+  min-width: 88px;
+  max-width: 106px;
+  min-height: 38px;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.map-app[data-device-mode="mobile"] .main-layout {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.map-app[data-device-mode="mobile"] .sidebar-shell {
+  flex: 0 0 42dvh;
+  height: 42dvh;
+  min-height: 250px;
+}
+
+.map-app[data-device-mode="mobile"] .sidebar-shell > .discovery-panel {
+  gap: 9px;
+  padding: 12px;
+  border-right: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.map-app[data-device-mode="mobile"] .discovery-panel h2 { font-size: 19px; }
+.map-app[data-device-mode="mobile"] .search-box { min-height: 42px; }
+.map-app[data-device-mode="mobile"] .search-box input { min-height: 40px; }
+.map-app[data-device-mode="mobile"] .category-list { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 3px; }
+.map-app[data-device-mode="mobile"] .category-list .category-chip { min-height: 32px; padding: 6px 10px; font-size: 11px; }
+.map-app[data-device-mode="mobile"] .poi-list { gap: 7px; }
+.map-app[data-device-mode="mobile"] .poi-card,
+.map-app[data-device-mode="mobile"] .discovery-card { padding: 10px 12px; border-radius: 12px; }
+.map-app[data-device-mode="mobile"] .poi-card h3,
+.map-app[data-device-mode="mobile"] .discovery-card h3 { font-size: 14px; }
+.map-app[data-device-mode="mobile"] .poi-card img,
+.map-app[data-device-mode="mobile"] .discovery-card img { max-height: 90px; }
+
+.map-app[data-device-mode="mobile"] .sidebar-toggle {
+  top: 8px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+  border: 1px solid #dce5dd;
+  border-radius: 9px;
+  transform: none;
+}
+
+.map-app[data-device-mode="mobile"] .map-area {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 0;
+  padding: calc(32dvh + 10px) 10px 12px;
+  overflow: visible;
+  background: #f5f7f4;
+}
+
+.map-app[data-device-mode="mobile"] .map-view,
+.map-app[data-device-mode="mobile"] .leaflet-map {
+  height: 32dvh;
+  min-height: 210px;
+}
+
+.map-app[data-device-mode="mobile"] .map-toolbar { top: 8px; right: 8px; }
+.map-app[data-device-mode="mobile"] .map-toolbar button { min-height: 34px; padding: 6px 9px; font-size: 11px; }
+
+.map-app[data-device-mode="mobile"] .selected-poi {
+  position: relative;
+  inset: auto;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  margin-top: 10px;
+  padding: 12px;
+  gap: 10px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgb(25 45 32 / 9%);
+}
+
+.map-app[data-device-mode="mobile"] .selected-poi-image > span { font-size: 27px; }
+.map-app[data-device-mode="mobile"] .selected-poi-info h3 { font-size: 16px; }
+.map-app[data-device-mode="mobile"] .selected-description { font-size: 13px; line-height: 1.55; }
+.map-app[data-device-mode="mobile"] .get-poi-qr-button { width: 34px; height: 32px; }
+.map-app[data-device-mode="mobile"] .nearby-pois,
+.map-app[data-device-mode="mobile"] .location-error { position: relative; inset: auto; margin: 10px 0 0; }
+.map-app[data-device-mode="mobile"] .main-layout.sidebar-collapsed .sidebar-shell { flex-basis: 0; height: 0; }
+
+@media (max-width: 480px) {
+  .device-mode-options { grid-template-columns: 1fr; }
+  .device-mode-options button { min-height: 88px; }
+  .device-mode-dialog { padding: 20px; }
+}

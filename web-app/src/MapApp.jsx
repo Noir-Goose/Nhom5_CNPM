@@ -20,6 +20,15 @@ import { saveLanguage } from "./services/languageService";
 import { loadPois } from "./services/poiService";
 
 function MapApp() {
+  // [DEVICE-001] Hoi va ghi nho che do bo cuc thiet bi tren trinh duyet.
+  const getSavedDeviceMode = () => {
+    try {
+      return window.localStorage.getItem("food-guide-device-mode");
+    } catch {
+      return null;
+    }
+  };
+  const [deviceMode, setDeviceMode] = useState(getSavedDeviceMode);
   // =========================
   // UC2: POI loading state
   // =========================
@@ -187,6 +196,16 @@ function MapApp() {
     }
   };
 
+  // [DEVICE-002] Luu lua chon va ap dung bo cuc mobile/desktop.
+  const handleDeviceModeChange = (nextMode) => {
+    setDeviceMode(nextMode);
+    try {
+      window.localStorage.setItem("food-guide-device-mode", nextMode);
+    } catch {
+      // Bo qua neu trinh duyet chan localStorage.
+    }
+  };
+
   // =========================
   // Select POI
   // =========================
@@ -235,7 +254,7 @@ function MapApp() {
   };
 
   return (
-    <div className="map-app">
+    <div className="map-app" data-device-mode={deviceMode ?? "mobile"}>
       <AppHeader
         language={language}
         languages={languages}
@@ -244,6 +263,8 @@ function MapApp() {
         }
         languageError={languageError}
         onGetAppQr={handleOpenAppQr}
+        deviceMode={deviceMode}
+        onDeviceModeChange={handleDeviceModeChange}
       />
 
       <main
@@ -373,6 +394,24 @@ function MapApp() {
             >
               Sao chép đường dẫn
             </button>
+          </section>
+        </div>
+      )}
+
+      {!deviceMode && (
+        <div className="device-mode-backdrop">
+          <section className="device-mode-dialog" role="dialog" aria-modal="true" aria-labelledby="device-mode-title">
+            <span className="section-label">TÙY CHỈNH GIAO DIỆN</span>
+            <h2 id="device-mode-title">Bạn đang sử dụng thiết bị nào?</h2>
+            <p>Chọn chế độ phù hợp để bố trí bản đồ và thông tin dễ xem hơn.</p>
+            <div className="device-mode-options">
+              <button type="button" onClick={() => handleDeviceModeChange("desktop")}>
+                <span aria-hidden="true">▣</span><strong>Máy tính</strong><small>Bản đồ và danh sách cạnh nhau</small>
+              </button>
+              <button type="button" onClick={() => handleDeviceModeChange("mobile")}>
+                <span aria-hidden="true">▯</span><strong>Điện thoại</strong><small>Bố cục dọc, ưu tiên nội dung</small>
+              </button>
+            </div>
           </section>
         </div>
       )}

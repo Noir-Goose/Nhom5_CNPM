@@ -8,6 +8,8 @@ function AppHeader({
   onLanguageChange,
   languageError,
   onGetAppQr, /* Lay QR tham gia ung dung*/
+  deviceMode,
+  onDeviceModeChange,
 }) {
   return (
     <header className="top-bar">
@@ -24,6 +26,18 @@ function AppHeader({
 
       <div className="header-language">
         <div className="header-language-actions">
+        {/* [DEVICE-003] Cho phep doi che do hien thi ngay trong header. */}
+        <label className="device-mode-control">
+          <span>Thiết bị</span>
+          <select
+            value={deviceMode ?? "mobile"}
+            onChange={(event) => onDeviceModeChange(event.target.value)}
+            aria-label="Chọn chế độ thiết bị"
+          >
+            <option value="desktop">Máy tính</option>
+            <option value="mobile">Điện thoại</option>
+          </select>
+        </label>
         <button
           type="button"
           className="get-app-qr-button"
