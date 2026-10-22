@@ -1602,6 +1602,18 @@ body,
     --bottom-controls-clearance: 100px;
   }
 
+  .map-app::after {
+    content: "";
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1050;
+    height: var(--bottom-controls-clearance);
+    background: #fff;
+    pointer-events: none;
+  }
+
   .map-app.has-poi-sheet {
     --bottom-bar-h: 0px;
   }
