@@ -273,6 +273,15 @@ function MapApp() {
   };
 
    // Thẻ kéo lên cao => ẩn thanh tìm kiếm + categories
+    // Tiêu đề hiển thị trên header của thẻ POI (cùng quy tắc với bộ lọc)
+  const selectedContent =
+    selectedPoi?.content?.[language] ??
+    selectedPoi?.content?.vi ??
+    {};
+  const selectedTitle =
+    selectedContent.name ?? selectedPoi?.name ?? "";
+
+  // Thẻ kéo lên cao => ẩn thanh tìm kiếm + categories
   const isSheetHigh =
     isMobile &&
     isPoiDetailsOpen &&
@@ -334,26 +343,28 @@ function MapApp() {
           onSelectPoi={handleSelectPoi}
         />
 
-        <button
-          type="button"
-          className="sidebar-toggle"
-          onClick={() =>
-            setIsSidebarCollapsed((previous) => !previous)
-          }
-          aria-label={
-            isSidebarCollapsed
-              ? "Mở sidebar"
-              : "Thu gọn sidebar"
-          }
-          aria-expanded={!isSidebarCollapsed}
-          title={
-            isSidebarCollapsed
-              ? "Mở sidebar"
-              : "Thu gọn sidebar"
-          }
-        >
-          {isSidebarCollapsed ? ">" : "<"}
-        </button>
+                {!isMobile && (
+          <button
+            type="button"
+            className="sidebar-toggle"
+            onClick={() =>
+              setIsSidebarCollapsed((previous) => !previous)
+            }
+            aria-label={
+              isSidebarCollapsed
+                ? "Mở sidebar"
+                : "Thu gọn sidebar"
+            }
+            aria-expanded={!isSidebarCollapsed}
+            title={
+              isSidebarCollapsed
+                ? "Mở sidebar"
+                : "Thu gọn sidebar"
+            }
+          >
+            {isSidebarCollapsed ? ">" : "<"}
+          </button>
+        )}
       </aside>
 
       <section
@@ -379,7 +390,10 @@ function MapApp() {
 
             {isMobile && selectedPoiPanel ? (
               <PoiBottomSheet
+                title={selectedTitle}
                 resetKey={`${selectedPoi?.id}-${language}`}
+                onClose={handleClosePoi}
+                onGetQr={() => handleOpenPoiQr(selectedPoi)}
                 onLayoutChange={setSheetLayout}
               >
                 {selectedPoiPanel}
