@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import L from "leaflet";
+import markerIconUrl from "leaflet/dist/images/marker-icon.png";
+import markerIconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
+import markerShadowUrl from "leaflet/dist/images/marker-shadow.png";
 import {
   MapContainer,
   TileLayer,
@@ -8,6 +12,13 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { uiLabels } from "../../data/i18n/uiLabels";
+
+// [MAP-002] Khai bao ro cac anh marker mac dinh de Vite bundle dung tai production.
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIconUrl,
+  iconRetinaUrl: markerIconRetinaUrl,
+  shadowUrl: markerShadowUrl,
+});
 
 function getPoiCoordinates(poi) {
   if (!poi) return null;
