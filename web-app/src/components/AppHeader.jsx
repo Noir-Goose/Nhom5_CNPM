@@ -11,6 +11,15 @@ function AppHeader({
   deviceMode,
   onDeviceModeChange,
 }) {
+  // [DEVICE-006] Dich nhan chon thiet bi theo ngon ngu hien tai.
+  const deviceLabel = {
+    vi: "Thiết bị",
+    en: "Device",
+    zh: "设备",
+    ja: "デバイス",
+    ko: "기기",
+  }[language] ?? "Device";
+
   return (
     <header className="top-bar">
       <div className="brand">
@@ -28,14 +37,14 @@ function AppHeader({
         <div className="header-language-actions">
         {/* [DEVICE-003] Cho phep doi che do hien thi ngay trong header. */}
         <label className="device-mode-control">
-          <span>Thiết bị</span>
+          <span>{deviceLabel}</span>
           <select
             value={deviceMode ?? "mobile"}
             onChange={(event) => onDeviceModeChange(event.target.value)}
-            aria-label="Chọn chế độ thiết bị"
+            aria-label={deviceLabel}
           >
-            <option value="desktop">Máy tính</option>
-            <option value="mobile">Điện thoại</option>
+            <option value="desktop">Desktop💻</option>
+            <option value="mobile">Mobile📱</option>
           </select>
         </label>
         <button

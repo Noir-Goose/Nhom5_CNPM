@@ -21,6 +21,25 @@ import useIsMobile from "./hooks/useIsMobile";
 import { saveLanguage } from "./services/languageService";
 import { loadPois } from "./services/poiService";
 
+// [QR-001] Ưu tiên ngôn ngữ trong link QR, sau đó dùng lựa chọn đã lưu.
+function getInitialLanguage() {
+  const supportedCodes = languages.map((item) => item.code);
+  const requestedLanguage = new URLSearchParams(window.location.search).get("lang");
+
+  if (supportedCodes.includes(requestedLanguage)) {
+    return requestedLanguage;
+  }
+
+  try {
+    const savedLanguage = window.localStorage.getItem("q4-language");
+    if (supportedCodes.includes(savedLanguage)) return savedLanguage;
+  } catch {
+    // Continue with the default language when storage is unavailable.
+  }
+
+  return "vi";
+}
+
 function MapApp() {
   // [DEVICE-001] Hoi va ghi nho che do bo cuc thiet bi tren trinh duyet.
   const getSavedDeviceMode = () => {
@@ -62,8 +81,7 @@ function MapApp() {
   // =========================
   // App / UI state
   // =========================
-  const [language, setLanguage] =
-    useState("vi");
+  const [language, setLanguage] = useState(getInitialLanguage);
 
   const [searchTerm, setSearchTerm] =
     useState("");
@@ -265,6 +283,7 @@ function MapApp() {
     const url = new URL(window.location.href);
 
     url.searchParams.delete("poi");
+    url.searchParams.set("lang", language);
     url.hash = "";
 
     setQrDialog({
@@ -283,6 +302,7 @@ function MapApp() {
     const url = new URL(window.location.href);
 
     url.searchParams.set("poi", String(poi.id));
+    url.searchParams.set("lang", language);
     url.hash = "";
 
     setQrDialog({
@@ -486,10 +506,10 @@ function MapApp() {
             <p>Chọn chế độ phù hợp để bố trí bản đồ và thông tin dễ xem hơn.</p>
             <div className="device-mode-options">
               <button type="button" onClick={() => handleDeviceModeChange("desktop")}>
-                <span aria-hidden="true">▣</span><strong>Máy tính</strong><small>Bản đồ và danh sách cạnh nhau</small>
+                <span aria-hidden="true">▣</span><strong>Desktop💻</strong><small>Bản đồ và danh sách cạnh nhau</small>
               </button>
               <button type="button" onClick={() => handleDeviceModeChange("mobile")}>
-                <span aria-hidden="true">▯</span><strong>Điện thoại</strong><small>Bố cục dọc, ưu tiên nội dung</small>
+                <span aria-hidden="true">▯</span><strong>Mobile📱</strong><small>Bố cục dọc, ưu tiên nội dung</small>
               </button>
             </div>
           </section>
