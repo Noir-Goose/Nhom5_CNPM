@@ -10,6 +10,7 @@ from pymongo.database import Database
 from pymongo.errors import PyMongoError
 
 from app.auth.admin_dependencies import get_current_admin
+from app.audit.service import record_audit_event
 from app.notifications.service import create_owner_notification
 
 router = APIRouter(
@@ -247,6 +248,13 @@ def approve_poi_submission(
             submission_id=submission_id,
         )
 
+        record_audit_event(
+            database, actor=admin, action="poi_submission.approve",
+            resource_type="poi_submission", resource_id=submission_id,
+            outcome="success", summary="Admin approved a POI submission",
+            changes={"status": {"before": "pending", "after": "approved"}},
+        )
+
         return {
             "message": "POI approved",
             "submissionId": submission_id,
@@ -331,6 +339,13 @@ def reject_poi_submission(
             submission_id=submission_id,
         )
 
+        record_audit_event(
+            database, actor=admin, action="poi_submission.reject",
+            resource_type="poi_submission", resource_id=submission_id,
+            outcome="success", summary="Admin rejected a POI submission",
+            changes={"status": {"before": "pending", "after": "rejected"}},
+        )
+
         return {
             "message": "POI rejected",
             "submissionId": submission_id,
@@ -375,6 +390,7 @@ def update_system_poi(
     database = get_database(request)
 
     try:
+        previous = database["pois"].find_one({"id": poi_id}, {"name": 1, "categoryKey": 1, "address": 1, "latitude": 1, "longitude": 1})
         result = database["pois"].update_one(
             {"id": poi_id},
             {
@@ -390,6 +406,16 @@ def update_system_poi(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="POI not found",
             )
+
+        changes = {
+            key: {"before": previous.get(key) if previous else None, "after": payload.model_dump().get(key)}
+            for key in ("name", "categoryKey", "address", "latitude", "longitude")
+        }
+        record_audit_event(
+            database, actor=admin, action="poi.update", resource_type="poi",
+            resource_id=poi_id, outcome="success", summary="Admin edited a POI",
+            changes=changes,
+        )
 
         return {"message": "POI updated", "poiId": poi_id}
 
@@ -467,6 +493,12 @@ def request_poi_revision(
                     "updatedAt": now,
                 }
             },
+        )
+        record_audit_event(
+            database, actor=admin, action="poi_submission.request_revision",
+            resource_type="poi_submission", resource_id=submission_id,
+            outcome="success", summary="Admin requested a POI revision",
+            changes={"status": {"before": "approved", "after": "revision_requested"}},
         )
 
         notify_owner_safely(

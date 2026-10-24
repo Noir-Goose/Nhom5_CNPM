@@ -8,6 +8,7 @@ from pymongo.errors import DuplicateKeyError, PyMongoError
 
 from app.auth.admin_dependencies import get_current_admin
 from app.auth.security import hash_password
+from app.audit.service import record_audit_event
 
 router = APIRouter(prefix="/api/v1/admin/users", tags=["Admin - User Management"])
 UserRole = Literal["admin", "poi_owner"]
@@ -99,6 +100,12 @@ def create_user(
         database["users"].create_index("email", unique=True)
         result = database["users"].insert_one(user)
         user["_id"] = result.inserted_id
+        record_audit_event(
+            database, actor=admin, action="user.create", resource_type="user",
+            resource_id=str(result.inserted_id), outcome="success",
+            summary="Admin created a user account",
+            changes={"email": {"after": email}, "fullName": {"after": payload.fullName}, "role": {"after": payload.role}},
+        )
         return serialize_user(user)
     except DuplicateKeyError as error:
         raise HTTPException(status_code=409, detail="Email này đã được sử dụng.") from error
@@ -136,10 +143,20 @@ def update_user(
 
     try:
         database["users"].create_index("email", unique=True)
+        previous = database["users"].find_one({"_id": target_id}, {"fullName": 1, "email": 1, "role": 1})
         result = database["users"].update_one({"_id": target_id}, {"$set": updates})
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Không tìm thấy người dùng.")
         user = database["users"].find_one({"_id": target_id}, {"passwordHash": 0})
+        record_audit_event(
+            database, actor=admin, action="user.update", resource_type="user",
+            resource_id=user_id, outcome="success", summary="Admin updated a user account",
+            changes={
+                "fullName": {"before": previous.get("fullName") if previous else None, "after": payload.fullName},
+                "email": {"before": previous.get("email") if previous else None, "after": email},
+                "role": {"before": previous.get("role") if previous else None, "after": payload.role},
+            },
+        )
         if payload.role == "admin":
             user.pop("approvalStatus", None)
         return serialize_user(user)
@@ -169,9 +186,15 @@ def update_user_status(
         if target.get("role") == "admin":
             raise HTTPException(status_code=400, detail="Không thể khóa hoặc mở khóa tài khoản Admin.")
 
+        previous_active = target.get("isActive", True) is not False
         users.update_one(
             {"_id": target_id},
             {"$set": {"isActive": payload.isActive, "updatedAt": datetime.now(UTC)}},
+        )
+        record_audit_event(
+            database, actor=admin, action="user.status_change", resource_type="user",
+            resource_id=user_id, outcome="success", summary="Admin changed user account status",
+            changes={"isActive": {"before": previous_active, "after": payload.isActive}},
         )
         target["isActive"] = payload.isActive
         target["updatedAt"] = datetime.now(UTC)

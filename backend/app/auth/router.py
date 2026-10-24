@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, status
 from pymongo.database import Database
 from pymongo.errors import PyMongoError
+from app.audit.service import record_audit_event
 from app.auth.security import create_access_token, verify_password
 from app.auth.schemas import (
     LoginRequest,
@@ -125,6 +126,16 @@ def login(payload: LoginRequest, request: Request):
         payload.password,
         user.get("passwordHash", ""),
     ):
+        record_audit_event(
+            database,
+            actor=None,
+            action="auth.login",
+            resource_type="auth_session",
+            resource_id=None,
+            outcome="failure",
+            summary="Login attempt was rejected",
+            reason_code="invalid_credentials",
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -158,6 +169,15 @@ def login(payload: LoginRequest, request: Request):
     token = create_access_token(
         user_id=str(user["_id"]),
         role=role,
+    )
+    record_audit_event(
+        database,
+        actor=user,
+        action="auth.login",
+        resource_type="auth_session",
+        resource_id=None,
+        outcome="success",
+        summary="User logged in successfully",
     )
 
     return {

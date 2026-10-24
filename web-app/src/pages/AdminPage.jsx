@@ -9,6 +9,7 @@ import "./AdminPage.css";
 import AdminPoiManagement from "../components/admin/poi/AdminPoiManagement";
 import AdminUserManagement from "../components/admin/users/AdminUserManagement";
 import AdminDashboard from "../components/admin/AdminDashboard";
+import AuditLog from "../components/admin/AuditLog";
 
 const menuItems = [
   {
@@ -30,6 +31,11 @@ const menuItems = [
     id: "user-management",
     icon: "👥",
     label: "Quản lý người dùng",
+  },
+  {
+    id: "audit-log",
+    icon: "🧾",
+    label: "Audit Log",
   },
 ];
 
@@ -216,6 +222,8 @@ function AdminPage() {
             <AdminPoiManagement />
           ) : activeMenu === "user-management" ? (
             <AdminUserManagement />
+          ) : activeMenu === "audit-log" ? (
+            <AuditLog />
           ) : (
             <>
               <section className="admin-heading">

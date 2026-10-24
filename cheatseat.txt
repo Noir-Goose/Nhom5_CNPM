@@ -108,6 +108,34 @@ Mô tả: Import rõ ảnh marker và bóng từ Leaflet để Vite đóng gói 
 Tệp: web-app/src/MapApp.jsx
 Mô tả: Link QR ứng dụng và QR địa điểm đều có tham số lang; khi mở, ứng dụng ưu tiên ngôn ngữ trong link.
 
+[AUDIT-LOG-001] Tạo audit event append-only và lọc dữ liệu nhạy cảm
+Tệp: backend/app/audit/service.py
+Mô tả: Ghi sự kiện có danh tính actor, hành động, đối tượng, kết quả, thời gian UTC và các thay đổi thuộc allowlist; không ghi mật khẩu, token, OTP, IP hoặc user-agent.
+
+[AUDIT-LOG-002] Nhật ký đăng nhập thành công/thất bại
+Tệp: backend/app/auth/router.py, backend/app/auth/admin_dependencies.py
+Mô tả: Ghi đăng nhập thành công/thất bại và truy cập Admin bị từ chối bằng reason code an toàn; không lưu email của lần đăng nhập thất bại.
+
+[AUDIT-LOG-003] Nhật ký các thao tác Admin trên người dùng
+Tệp: backend/app/admin/users_router.py
+Mô tả: Ghi tạo, cập nhật thông tin/vai trò và khóa/mở tài khoản sau khi thao tác thành công.
+
+[AUDIT-LOG-004] Nhật ký kiểm duyệt POI và đăng ký POI Owner
+Tệp: backend/app/admin/poi_router.py, backend/app/admin/router.py
+Mô tả: Ghi duyệt/từ chối/yêu cầu sửa POI, sửa POI và duyệt/từ chối/xóa đăng ký POI Owner.
+
+[AUDIT-LOG-005] API danh sách, bộ lọc, phân trang và chi tiết Audit Log
+Tệp: backend/app/admin/audit_router.py
+Mô tả: GET /api/v1/admin/audit-logs và GET /api/v1/admin/audit-logs/{event_id}; mọi request cần token Admin được xác minh ở backend.
+
+[AUDIT-LOG-006] Màn hình Audit Log Admin
+Tệp: web-app/src/components/admin/AuditLog.jsx, web-app/src/pages/AdminPage.jsx, web-app/src/pages/AdminPage.css
+Mô tả: Xem mới nhất trước, lọc theo thời gian/actor/action/resource/outcome/từ khóa, phân trang và mở chi tiết sự kiện.
+
+[AUDIT-LOG-007] Chỉ mục audit log khi khởi động
+Tệp: backend/app/main.py, backend/app/audit/service.py
+Mô tả: Tạo các index phục vụ eventId, thời gian, actor, action, resource và outcome; thiếu quyền tạo index chỉ ghi log vận hành.
+
 [DEVICE-006] Dịch nhãn và thống nhất tên chế độ thiết bị
 Tệp: web-app/src/components/AppHeader.jsx
 Mô tả: Dịch nhãn Thiết bị theo ngôn ngữ giao diện; hai lựa chọn hiển thị Desktop💻 và Mobile📱.

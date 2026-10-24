@@ -15,6 +15,8 @@ from app.admin.router import router as admin_router
 from app.admin.users_router import router as admin_users_router
 from app.auth.router import router as auth_router
 from app.admin.poi_router import router as admin_poi_router
+from app.admin.audit_router import router as admin_audit_router
+from app.audit.service import ensure_audit_indexes
 from app.analytics import router as analytics_router
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_DIR / ".env")
@@ -77,6 +79,10 @@ async def lifespan(app: FastAPI):
         client.admin.command("ping")
         database = client[MONGODB_DB_NAME]
         app.state.database = database
+        try:
+            ensure_audit_indexes(database)
+        except PyMongoError as index_error:
+            print(f"Could not create audit log indexes: {index_error}")
         # [TOUR-AN-007] Index timestamp; thiếu quyền index không được làm backend ngừng khởi động.
         try:
             database["tour_analytics"].create_index("createdAt")
@@ -111,6 +117,7 @@ app.include_router(admin_poi_router)
 app.include_router(poi_owner_router)
 app.include_router(admin_router)
 app.include_router(admin_users_router)
+app.include_router(admin_audit_router)
 app.include_router(owner_notifications_router)
 app.include_router(analytics_router)
 app.add_middleware(

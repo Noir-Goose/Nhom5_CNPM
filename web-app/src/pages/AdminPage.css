@@ -1046,3 +1046,43 @@
   color: #1d4ed8;
   font-weight: 600;
 }
+
+/* [AUDIT-LOG-006] Bảng lọc, nhật ký và cửa sổ xem chi tiết UC13. */
+.audit-log-page .admin-heading { align-items: center; justify-content: space-between; gap: 18px; margin: 0 0 22px !important; }
+.audit-log-page .admin-heading h1 { margin: 8px 0; color: #243047; }
+.audit-log-page .admin-heading p { margin: 0; color: #748094; }
+.audit-filters { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 13px; margin-bottom: 18px; padding: 18px; border: 1px solid #e6eaf0; border-radius: 12px; background: #fff; }
+.audit-filters label { display: grid; gap: 6px; color: #596579; font-size: 12px; font-weight: 600; }
+.audit-filters input, .audit-filters select { min-width: 0; height: 39px; padding: 8px 10px; border: 1px solid #d9e0e9; border-radius: 8px; background: #fff; color: #243047; font: inherit; font-size: 13px; }
+.audit-keyword { grid-column: span 2; }
+.audit-filter-actions { display: flex; align-items: end; gap: 8px; }
+.audit-filter-actions button, .audit-pagination button, .audit-detail-button { min-height: 38px; padding: 8px 13px; border: 1px solid #d9e0e9; border-radius: 8px; background: #fff; color: #475569; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.audit-filter-actions .admin-primary { border-color: #c65c27; background: #c65c27; color: #fff; }
+.audit-filter-actions button:hover, .audit-pagination button:hover:not(:disabled), .audit-detail-button:hover { border-color: #e76b32; color: #c65c27; }
+.audit-table-wrap { overflow-x: auto; border: 1px solid #e6eaf0; border-radius: 12px; background: #fff; }
+.audit-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.audit-table th, .audit-table td { padding: 12px 13px; border-bottom: 1px solid #edf0f5; text-align: left; vertical-align: top; }
+.audit-table th { background: #f8f9fc; color: #667085; font-size: 11px; white-space: nowrap; }
+.audit-table td { color: #475467; }
+.audit-table td small { display: block; max-width: 170px; margin-top: 4px; overflow: hidden; color: #98a2b3; text-overflow: ellipsis; }
+.audit-table code { color: #7c3aed; white-space: nowrap; }
+.audit-state { height: 100px; color: #7c8799 !important; text-align: center !important; vertical-align: middle !important; }
+.audit-outcome { display: inline-block; padding: 4px 8px; border-radius: 99px; background: #f2f4f7; color: #667085; font-size: 11px; }
+.audit-outcome.success { background: #eaf8ef; color: #187443; }
+.audit-outcome.failure, .audit-outcome.denied { background: #fff0ef; color: #b42318; }
+.audit-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 2px; color: #748094; font-size: 12px; }
+.audit-pagination div { display: flex; gap: 8px; }
+.audit-pagination button:disabled { opacity: .45; cursor: not-allowed; }
+.audit-modal-backdrop { position: fixed; z-index: 2000; inset: 0; display: grid; place-items: center; padding: 20px; background: rgb(15 23 42 / 48%); }
+.audit-modal { width: min(680px, 100%); max-height: min(85vh, 800px); overflow: auto; padding: 22px; border-radius: 14px; background: #fff; box-shadow: 0 24px 80px rgb(15 23 42 / 24%); }
+.audit-modal header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.audit-modal header h2 { margin: 0; font-size: 19px; }
+.audit-modal header button { border: 0; background: transparent; color: #667085; font-size: 27px; cursor: pointer; }
+.audit-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0; }
+.audit-detail-grid div { min-width: 0; padding: 10px; border-radius: 8px; background: #f8f9fc; }
+.audit-detail-grid dt { margin-bottom: 5px; color: #7c8799; font-size: 11px; }
+.audit-detail-grid dd { margin: 0; overflow-wrap: anywhere; color: #344054; font-size: 13px; }
+.audit-modal h3 { margin: 20px 0 8px; font-size: 14px; }
+.audit-modal pre { overflow: auto; padding: 12px; border-radius: 8px; background: #f8f9fc; color: #344054; font-size: 12px; }
+@media (max-width: 900px) { .audit-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .audit-filters { grid-template-columns: 1fr; padding: 13px; } .audit-keyword { grid-column: auto; } .audit-log-page .admin-heading { align-items: flex-start; flex-direction: column; } .audit-detail-grid { grid-template-columns: 1fr; } .audit-pagination { align-items: flex-start; flex-direction: column; } }

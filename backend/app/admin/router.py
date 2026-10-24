@@ -7,6 +7,7 @@ from pymongo.database import Database
 from pymongo.errors import PyMongoError
 
 from app.auth.admin_dependencies import get_current_admin
+from app.audit.service import record_audit_event
 
 router = APIRouter(
     prefix="/api/v1/admin",
@@ -93,6 +94,7 @@ def update_registration_status(
     database: Database,
     user_id: str,
     new_status: str,
+    admin: dict[str, Any],
 ) -> dict[str, str]:
     """Update a POI Owner registration status."""
     if not ObjectId.is_valid(user_id):
@@ -166,6 +168,13 @@ def update_registration_status(
         )
 
         if result.modified_count == 1:
+            record_audit_event(
+                database, actor=admin,
+                action=f"poi_owner_registration.{'approve' if new_status == 'approved' else 'reject'}",
+                resource_type="user", resource_id=user_id, outcome="success",
+                summary=f"Admin {new_status} a POI Owner registration",
+                changes={"approvalStatus": {"before": current_status, "after": new_status}},
+            )
             return {
                 "message": f"POI Owner registration {new_status}",
                 "userId": user_id,
@@ -213,6 +222,7 @@ def approve_poi_owner_registration(
         database,
         user_id,
         "approved",
+        admin,
     )
 
 
@@ -229,6 +239,7 @@ def reject_poi_owner_registration(
         database,
         user_id,
         "rejected",
+        admin,
     )
 
 @router.delete("/poi-owner-registrations/{user_id}")
@@ -259,6 +270,13 @@ def delete_rejected_poi_owner_registration(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Rejected POI Owner registration not found",
             )
+
+        record_audit_event(
+            database, actor=admin, action="poi_owner_registration.delete",
+            resource_type="user", resource_id=user_id, outcome="success",
+            summary="Admin deleted a rejected POI Owner registration",
+            changes={"approvalStatus": {"before": "rejected", "after": None}},
+        )
 
         return {
             "message": "Rejected POI Owner registration deleted",
