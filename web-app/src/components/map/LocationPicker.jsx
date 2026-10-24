@@ -37,6 +37,7 @@ export default function LocationPicker({ value, onChange }) {
       streetViewControl: false,
       fullscreenControl: false,
       gestureHandling: "greedy",
+      mapId: import.meta.env.VITE_GOOGLE_MAP_ID || "DEMO_MAP_ID",
     });
     mapRef.current.addListener("click", (event) => {
       if (event.latLng) onChangeRef.current({ latitude: event.latLng.lat(), longitude: event.latLng.lng() });
@@ -46,8 +47,8 @@ export default function LocationPicker({ value, onChange }) {
   useEffect(() => {
     if (!mapRef.current || !mapsLibrary || !position) return;
     mapRef.current.panTo(position);
-    if (markerRef.current) markerRef.current.setMap(null);
-    markerRef.current = new mapsLibrary.Marker({ map: mapRef.current, position });
+    if (markerRef.current) markerRef.current.map = null;
+    markerRef.current = new mapsLibrary.AdvancedMarkerElement({ map: mapRef.current, position });
   }, [mapsLibrary, position]);
 
   return (

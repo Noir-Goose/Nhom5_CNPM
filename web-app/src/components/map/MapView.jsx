@@ -90,21 +90,23 @@ export default function MapView({ pois = [], selectedPoi, language, onSelectPoi 
       fullscreenControl: false,
       clickableIcons: false,
       gestureHandling: "greedy",
+      mapId: import.meta.env.VITE_GOOGLE_MAP_ID || "DEMO_MAP_ID",
     });
     infoWindowRef.current = new mapsLibrary.InfoWindow();
   }, [mapsLibrary, validPois]);
 
   useEffect(() => {
     if (!mapRef.current || !mapsLibrary) return;
-    markersRef.current.forEach((marker) => marker.setMap(null));
+    markersRef.current.forEach((marker) => { marker.map = null; });
     markersRef.current = validPois.map(({ poi, coordinates }) => {
       const content = poi.content?.[language] ?? poi.content?.vi ?? {};
-      const marker = new mapsLibrary.Marker({
+      const marker = new mapsLibrary.AdvancedMarkerElement({
         map: mapRef.current,
         position: { lat: coordinates[0], lng: coordinates[1] },
         title: content.name ?? poi.name ?? "Địa điểm",
       });
-      marker.addListener("click", () => {
+      marker.gmpClickable = true;
+      marker.addEventListener("gmp-click", () => {
         infoWindowRef.current.setContent(createInfoContent(document, {
           name: content.name ?? poi.name ?? "Địa điểm",
           category: content.category ?? poi.categoryKey ?? "",
@@ -115,7 +117,7 @@ export default function MapView({ pois = [], selectedPoi, language, onSelectPoi 
       });
       return marker;
     });
-    return () => markersRef.current.forEach((marker) => marker.setMap(null));
+    return () => markersRef.current.forEach((marker) => { marker.map = null; });
   }, [mapsLibrary, validPois, language]);
 
   const selectedLatitude = selectedCoordinates?.[0] ?? null;
@@ -131,12 +133,18 @@ export default function MapView({ pois = [], selectedPoi, language, onSelectPoi 
     if (!mapRef.current || !mapsLibrary || !userLocation) return;
     mapRef.current.panTo({ lat: userLocation[0], lng: userLocation[1] });
     mapRef.current.setZoom(16);
-    if (userMarkerRef.current) userMarkerRef.current.setMap(null);
-    userMarkerRef.current = new mapsLibrary.Marker({
+    if (userMarkerRef.current) userMarkerRef.current.map = null;
+    const pin = new mapsLibrary.PinElement({
+      background: "#2563eb",
+      borderColor: "#ffffff",
+      glyphColor: "#ffffff",
+      scale: 1.1,
+    });
+    userMarkerRef.current = new mapsLibrary.AdvancedMarkerElement({
       map: mapRef.current,
       position: { lat: userLocation[0], lng: userLocation[1] },
       title: currentLocationText,
-      icon: { path: mapsLibrary.SymbolPath.CIRCLE, scale: 7, fillColor: "#2563eb", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 },
+      content: pin.element,
     });
   }, [mapsLibrary, userLocation, currentLocationText]);
 
