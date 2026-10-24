@@ -25,8 +25,6 @@ export const uiLabels = {
     error: { vi: "Không thể phát thuyết minh. Vui lòng thử lại.", en: "Unable to play narration. Please try again.", zh: "无法播放讲解，请重试。", ja: "音声ガイドを再生できません。もう一度お試しください。", ko: "음성 안내를 재생할 수 없습니다. 다시 시도하세요." },
   },
   map: {
-    apiKeyMissing: { vi: "Thiếu VITE_GOOGLE_MAPS_API_KEY trong cấu hình frontend.", en: "VITE_GOOGLE_MAPS_API_KEY is missing from the frontend configuration.", zh: "前端配置缺少 VITE_GOOGLE_MAPS_API_KEY。", ja: "フロントエンド設定に VITE_GOOGLE_MAPS_API_KEY がありません。", ko: "프런트엔드 설정에 VITE_GOOGLE_MAPS_API_KEY가 없습니다." },
-    mapApiError: { vi: "Không thể tải Google Maps. Kiểm tra API key, billing và giới hạn domain.", en: "Google Maps could not load. Check the API key, billing, and website restrictions.", zh: "无法加载 Google 地图。请检查 API 密钥、结算和网站限制。", ja: "Google マップを読み込めません。API キー、請求先、ウェブサイト制限を確認してください。", ko: "Google 지도를 불러오지 못했습니다. API 키, 결제, 웹사이트 제한을 확인하세요." },
     locate: { vi: "◎ Vị trí của tôi", en: "◎ My location", zh: "◎ 我的位置", ja: "◎ 現在地", ko: "◎ 내 위치" },
     locating: { vi: "Đang định vị...", en: "Locating...", zh: "正在定位...", ja: "位置を取得中...", ko: "위치 확인 중..." },
     gpsUnsupported: { vi: "Trình duyệt không hỗ trợ định vị GPS.", en: "This browser does not support GPS location.", zh: "此浏览器不支持 GPS 定位。", ja: "このブラウザーは GPS 位置情報に対応していません。", ko: "이 브라우저는 GPS 위치 확인을 지원하지 않습니다." },

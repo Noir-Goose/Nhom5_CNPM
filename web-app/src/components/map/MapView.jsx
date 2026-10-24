@@ -1,15 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import L from "leaflet";
+import markerIconUrl from "leaflet/dist/images/marker-icon.png";
+import markerIconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
+import markerShadowUrl from "leaflet/dist/images/marker-shadow.png";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import { uiLabels } from "../../data/i18n/uiLabels";
-import { loadGoogleMaps } from "./googleMapsLoader";
+
+// [MAP-002] Import các ảnh marker để Vite đóng gói đúng khi deploy.
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIconUrl,
+  iconRetinaUrl: markerIconRetinaUrl,
+  shadowUrl: markerShadowUrl,
+});
 
 function getPoiCoordinates(poi) {
   if (!poi) return null;
   const rawLatitude = poi.latitude ?? poi.location?.latitude ?? poi.lat;
   const rawLongitude = poi.longitude ?? poi.location?.longitude ?? poi.lng ?? poi.lon;
   if (rawLatitude == null || rawLongitude == null || rawLatitude === "" || rawLongitude === "") return null;
+
   const latitude = Number(rawLatitude);
   const longitude = Number(rawLongitude);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
   return [latitude, longitude];
 }
 
@@ -25,128 +39,42 @@ function calculateDistance(a, b) {
   return 2 * earthRadiusKm * Math.atan2(Math.sqrt(safeH), Math.sqrt(1 - safeH));
 }
 
-function createInfoContent(documentRef, { name, category, description }) {
-  const root = documentRef.createElement("div");
-  const title = documentRef.createElement("strong");
-  title.textContent = name;
-  root.appendChild(title);
-  if (category) {
-    const element = documentRef.createElement("p");
-    element.textContent = category;
-    root.appendChild(element);
-  }
-  if (description) {
-    const element = documentRef.createElement("p");
-    element.textContent = description;
-    root.appendChild(element);
-  }
-  return root;
+function FitSelectedPoi({ coordinates }) {
+  const map = useMap();
+  useEffect(() => {
+    if (coordinates) map.flyTo(coordinates, Math.max(map.getZoom(), 15), { duration: 0.5 });
+  }, [coordinates, map]);
+  return null;
+}
+
+function FocusUserLocation({ coordinates }) {
+  const map = useMap();
+  useEffect(() => {
+    if (coordinates) map.flyTo(coordinates, 16, { duration: 0.8 });
+  }, [coordinates, map]);
+  return null;
 }
 
 export default function MapView({ pois = [], selectedPoi, language, onSelectPoi }) {
-  const mapElementRef = useRef(null);
-  const mapRef = useRef(null);
-  const markersRef = useRef([]);
-  const infoWindowRef = useRef(null);
-  const userMarkerRef = useRef(null);
-  const onSelectPoiRef = useRef(onSelectPoi);
-  const [mapsLibrary, setMapsLibrary] = useState(null);
-  const [mapError, setMapError] = useState("");
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState("");
   const [isLocating, setIsLocating] = useState(false);
 
-  const validPois = useMemo(() => pois.map((poi) => ({ poi, coordinates: getPoiCoordinates(poi) }))
+  const validPois = useMemo(() => pois
+    .map((poi) => ({ poi, coordinates: getPoiCoordinates(poi) }))
     .filter(({ poi, coordinates }) => coordinates && poi.isActive !== false && poi.approvalStatus !== "pending"), [pois]);
-  const selectedCoordinates = useMemo(() => getPoiCoordinates(selectedPoi), [selectedPoi]);
+  const selectedCoordinates = getPoiCoordinates(selectedPoi);
+  const initialCenter = selectedCoordinates ?? validPois[0]?.coordinates ?? [10.7576, 106.7];
   const labels = uiLabels.map;
   const text = (key) => labels[key]?.[language] ?? labels[key]?.vi ?? "";
-  const currentLocationText = text("currentLocation");
-  useEffect(() => { onSelectPoiRef.current = onSelectPoi; }, [onSelectPoi]);
+
   const nearbyPois = useMemo(() => {
     if (!userLocation) return [];
-    return validPois.map(({ poi, coordinates }) => ({ poi, distance: calculateDistance(userLocation, coordinates) }))
-      .filter(({ distance }) => distance <= 5).sort((a, b) => a.distance - b.distance);
+    return validPois
+      .map(({ poi, coordinates }) => ({ poi, distance: calculateDistance(userLocation, coordinates) }))
+      .filter(({ distance }) => distance <= 5)
+      .sort((a, b) => a.distance - b.distance);
   }, [validPois, userLocation]);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadGoogleMaps().then((library) => {
-      if (!cancelled) setMapsLibrary(library);
-    }).catch((error) => {
-      if (!cancelled) setMapError(error.message === "missing-api-key" ? "apiKeyMissing" : "mapApiError");
-    });
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    if (!mapsLibrary || !mapElementRef.current || mapRef.current) return;
-    const center = validPois[0]?.coordinates ?? [10.7576, 106.7];
-    mapRef.current = new mapsLibrary.Map(mapElementRef.current, {
-      center: { lat: center[0], lng: center[1] },
-      zoom: 15,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false,
-      clickableIcons: false,
-      gestureHandling: "greedy",
-      mapId: import.meta.env.VITE_GOOGLE_MAP_ID || "DEMO_MAP_ID",
-    });
-    infoWindowRef.current = new mapsLibrary.InfoWindow();
-  }, [mapsLibrary, validPois]);
-
-  useEffect(() => {
-    if (!mapRef.current || !mapsLibrary) return;
-    markersRef.current.forEach((marker) => { marker.map = null; });
-    markersRef.current = validPois.map(({ poi, coordinates }) => {
-      const content = poi.content?.[language] ?? poi.content?.vi ?? {};
-      const marker = new mapsLibrary.AdvancedMarkerElement({
-        map: mapRef.current,
-        position: { lat: coordinates[0], lng: coordinates[1] },
-        title: content.name ?? poi.name ?? "Địa điểm",
-      });
-      marker.gmpClickable = true;
-      marker.addEventListener("gmp-click", () => {
-        infoWindowRef.current.setContent(createInfoContent(document, {
-          name: content.name ?? poi.name ?? "Địa điểm",
-          category: content.category ?? poi.categoryKey ?? "",
-          description: content.description ?? poi.description ?? "",
-        }));
-        infoWindowRef.current.open({ map: mapRef.current, anchor: marker });
-        onSelectPoiRef.current(poi);
-      });
-      return marker;
-    });
-    return () => markersRef.current.forEach((marker) => { marker.map = null; });
-  }, [mapsLibrary, validPois, language]);
-
-  const selectedLatitude = selectedCoordinates?.[0] ?? null;
-  const selectedLongitude = selectedCoordinates?.[1] ?? null;
-  useEffect(() => {
-    if (mapRef.current && selectedLatitude != null && selectedLongitude != null) {
-      mapRef.current.panTo({ lat: selectedLatitude, lng: selectedLongitude });
-      mapRef.current.setZoom(Math.max(mapRef.current.getZoom() ?? 15, 15));
-    }
-  }, [selectedLatitude, selectedLongitude]);
-
-  useEffect(() => {
-    if (!mapRef.current || !mapsLibrary || !userLocation) return;
-    mapRef.current.panTo({ lat: userLocation[0], lng: userLocation[1] });
-    mapRef.current.setZoom(16);
-    if (userMarkerRef.current) userMarkerRef.current.map = null;
-    const pin = new mapsLibrary.PinElement({
-      background: "#2563eb",
-      borderColor: "#ffffff",
-      glyphColor: "#ffffff",
-      scale: 1.1,
-    });
-    userMarkerRef.current = new mapsLibrary.AdvancedMarkerElement({
-      map: mapRef.current,
-      position: { lat: userLocation[0], lng: userLocation[1] },
-      title: currentLocationText,
-      content: pin.element,
-    });
-  }, [mapsLibrary, userLocation, currentLocationText]);
 
   const handleLocate = () => {
     setLocationError("");
@@ -172,16 +100,50 @@ export default function MapView({ pois = [], selectedPoi, language, onSelectPoi 
           {isLocating ? text("locating") : text("locate")}
         </button>
       </div>
-      <div ref={mapElementRef} className="google-map" role="application" aria-label="Google Map" />
-      {mapError && <p className="map-provider-error" role="alert">{text(mapError)}</p>}
+
+      <MapContainer center={initialCenter} zoom={15} scrollWheelZoom className="leaflet-map">
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <FitSelectedPoi coordinates={selectedCoordinates} />
+        <FocusUserLocation coordinates={userLocation} />
+
+        {validPois.map(({ poi, coordinates }) => {
+          const content = poi.content?.[language] ?? poi.content?.vi ?? {};
+          const name = content.name ?? poi.name ?? "Địa điểm";
+          return (
+            <Marker key={poi.id} position={coordinates} eventHandlers={{ click: () => onSelectPoi(poi) }}>
+              <Popup>
+                <strong>{name}</strong>
+                {(content.category ?? poi.categoryKey) && <p>{content.category ?? poi.categoryKey}</p>}
+                {(content.description ?? poi.description) && <p>{content.description ?? poi.description}</p>}
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {userLocation && <Marker position={userLocation}><Popup>{text("currentLocation")}</Popup></Marker>}
+      </MapContainer>
+
       {locationError && <p className="location-error" role="alert">{text(locationError)}</p>}
-      {userLocation && <section className="nearby-pois">
-        <h3>{text("nearby")}</h3>
-        {nearbyPois.length > 0 ? <ul>{nearbyPois.map(({ poi, distance }) => {
-          const name = poi.content?.[language]?.name ?? poi.content?.vi?.name ?? poi.name ?? "Địa điểm";
-          return <li key={poi.id}><button type="button" onClick={() => onSelectPoi(poi)}>{name}{" — "}{distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(2)} km`}</button></li>;
-        })}</ul> : <p>{text("noNearby")}</p>}
-      </section>}
+      {userLocation && (
+        <section className="nearby-pois">
+          <h3>{text("nearby")}</h3>
+          {nearbyPois.length > 0 ? (
+            <ul>{nearbyPois.map(({ poi, distance }) => {
+              const name = poi.content?.[language]?.name ?? poi.content?.vi?.name ?? poi.name ?? "Địa điểm";
+              return (
+                <li key={poi.id}>
+                  <button type="button" onClick={() => onSelectPoi(poi)}>
+                    {name}{" — "}{distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(2)} km`}
+                  </button>
+                </li>
+              );
+            })}</ul>
+          ) : <p>{text("noNearby")}</p>}
+        </section>
+      )}
     </div>
   );
 }

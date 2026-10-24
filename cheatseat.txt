@@ -1,4 +1,4 @@
-﻿CHEATSEAT - TRA CỨU TÍNH NĂNG
+CHEATSEAT - TRA CỨU TÍNH NĂNG
 ================================
 
 Tìm mã trong VS Code bằng Ctrl+Shift+F. Các mã này được đặt ngay cạnh code của tính năng tương ứng.
@@ -100,25 +100,13 @@ Mô tả: MapView luôn được render trong lúc tải hoặc khi backend lỗ
 Tệp: web-app/vercel.json
 Mô tả: Rewrite các đường dẫn như /admin và /login về index.html để React xử lý route phía trình duyệt.
 
-[MAP-002] Thay Leaflet/OpenStreetMap bằng Google Maps
-Tệp: web-app/src/components/map/MapView.jsx, web-app/src/components/map/LocationPicker.jsx
-Mô tả: Bản đồ chính và bộ chọn vị trí POI dùng Google Maps; không còn yêu cầu ảnh marker Leaflet hay tile OpenStreetMap.
-
-[MAP-003] Tải Google Maps JavaScript API dùng chung
-Tệp: web-app/src/components/map/googleMapsLoader.js
-Mô tả: Tải API một lần bằng VITE_GOOGLE_MAPS_API_KEY; cả bản đồ chính và trình chọn tọa độ dùng chung loader.
-
-[MAP-004] Bản đồ POI và vị trí người dùng dùng Google Maps
+[MAP-002] Sửa ảnh marker mặc định Leaflet trên Vite
 Tệp: web-app/src/components/map/MapView.jsx
-Mô tả: Hiện Google Map, marker POI, cửa sổ thông tin, vị trí GPS và danh sách địa điểm trong bán kính 5 km.
+Mô tả: Import rõ ảnh marker và bóng từ Leaflet để Vite đóng gói đúng khi deploy production.
 
-[MAP-005] Chọn tọa độ POI bằng Google Maps
-Tệp: web-app/src/components/map/LocationPicker.jsx
-Mô tả: Admin/POI Owner bấm lên bản đồ Google để lấy vĩ độ và kinh độ cho POI.
-
-[MAP-006] Cấu hình API key Google Maps khi deploy
-Tệp: web-app/.env.example, web-app/README.md
-Mô tả: Thêm VITE_GOOGLE_MAPS_API_KEY; giới hạn key theo Maps JavaScript API và HTTP referrer domain.
+[MAP-003] Dùng Leaflet và OpenStreetMap làm nhà cung cấp bản đồ
+Tệp: web-app/src/components/map/MapView.jsx, web-app/src/components/map/LocationPicker.jsx
+Mô tả: Hiển thị tile OpenStreetMap, marker POI, popup thông tin, vị trí hiện tại và cho phép chọn tọa độ trên bản đồ; không cần Google Maps API key.
 
 [QR-001] QR giữ ngôn ngữ người tạo đã chọn
 Tệp: web-app/src/MapApp.jsx
@@ -155,4 +143,3 @@ Mô tả: Tạo các index phục vụ eventId, thời gian, actor, action, reso
 [DEVICE-006] Dịch nhãn và thống nhất tên chế độ thiết bị
 Tệp: web-app/src/components/AppHeader.jsx
 Mô tả: Dịch nhãn Thiết bị theo ngôn ngữ giao diện; hai lựa chọn hiển thị Desktop💻 và Mobile📱.
-
