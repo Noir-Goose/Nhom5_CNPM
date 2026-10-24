@@ -1,5 +1,7 @@
 import json
 import os
+import threading
+import time
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -13,6 +15,9 @@ router = APIRouter(prefix="/api/v1/owner/poi", tags=["POI Owner"])
 TARGET_LANGUAGES = {"en": "EN-US", "zh": "ZH", "ja": "JA", "ko": "KO"}
 DEEPL_FREE_URL = "https://api-free.deepl.com/v2/translate"
 DEEPL_PRO_URL = "https://api.deepl.com/v2/translate"
+DEEPL_REQUEST_INTERVAL_SECONDS = 1.0
+_deepl_request_lock = threading.Lock()
+_last_deepl_request_at = 0.0
 
 
 class VietnameseContent(BaseModel):
@@ -34,6 +39,7 @@ class TranslationRequest(BaseModel):
 
 
 def translate_fields(texts: list[str], target: str, endpoint: str, api_key: str) -> list[str]:
+    global _last_deepl_request_at
     body = json.dumps({
         "text": texts,
         "source_lang": "VI",
@@ -49,8 +55,16 @@ def translate_fields(texts: list[str], target: str, endpoint: str, api_key: str)
         method="POST",
     )
     try:
-        with urlopen(request, timeout=20) as response:
-            result: dict[str, Any] = json.loads(response.read().decode("utf-8"))
+        # Serialize provider calls and wait one second after the previous call finishes.
+        with _deepl_request_lock:
+            elapsed = time.monotonic() - _last_deepl_request_at
+            if _last_deepl_request_at and elapsed < DEEPL_REQUEST_INTERVAL_SECONDS:
+                time.sleep(DEEPL_REQUEST_INTERVAL_SECONDS - elapsed)
+            try:
+                with urlopen(request, timeout=20) as response:
+                    result: dict[str, Any] = json.loads(response.read().decode("utf-8"))
+            finally:
+                _last_deepl_request_at = time.monotonic()
         return [translation["text"] for translation in result["translations"]]
     except (HTTPError, URLError, TimeoutError, KeyError, IndexError, TypeError, ValueError) as error:
         raise HTTPException(
