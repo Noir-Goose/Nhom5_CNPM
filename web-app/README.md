@@ -1,16 +1,23 @@
 # Frontend deployment
 
-Netlify builds this directory as a static Vite site. It does not run the FastAPI backend or connect directly to MongoDB.
+The frontend is a Vite single-page application. Deploy the `web-app` directory as a Vercel project with the Vite preset, `npm run build` as the build command, and `dist` as the output directory. The included `vercel.json` rewrites app routes such as `/login` and `/admin` to `index.html`.
 
-## Connect Netlify to the API
+## Connect Vercel to the Railway API
 
-1. Deploy the `backend` directory as a Python web service on a host that can run FastAPI (for example, Render or Railway). Use `uvicorn app.main:app --host 0.0.0.0 --port $PORT` as the start command and `backend` as the working/root directory.
-2. Set these backend environment variables in that host:
-   - `MONGODB_URI`: MongoDB Atlas connection string
-   - `MONGODB_DB_NAME`: `q4_food_guide`
-   - `FRONTEND_ORIGINS`: the exact Netlify site origin, such as `https://your-site.netlify.app` (no trailing slash). Include localhost origins too if you still develop locally.
-   - Set the SMTP and JWT variables from `backend/.env.example` if the email and authentication features are used.
-3. In Netlify, set `VITE_API_BASE_URL` to the deployed backend's public origin, for example `https://your-api.example.com` (no trailing slash), then trigger a new deploy. Vite embeds this value at build time.
-4. Open `https://your-api.example.com/health/ready`. A `ready` response confirms that the API can reach MongoDB. Then reload the Netlify site and check its Network panel for `/api/v1/poi/load-all?lang=vi` returning HTTP 200.
+In Vercel, open **Project Settings → Environment Variables** and add:
 
-For local development, copy `web-app/.env.example` to `web-app/.env.local`, and configure the backend using `backend/.env.example` copied to `backend/.env`.
+- Key: `VITE_API_BASE_URL`
+- Value: the Railway backend origin, for example `https://nhom5cnpm-production.up.railway.app`
+- Environments: Production; add Preview too if preview deployments should use the API.
+
+Use only the backend origin: do not append `/api/v1` or an endpoint path, and do not add a trailing slash. The frontend adds the API paths itself. Vite embeds environment variables at build time, so redeploy after changing this value.
+
+On Railway, set `FRONTEND_ORIGINS` to the exact frontend origins allowed to call the API, separated by commas and without trailing slashes. Include the Vercel production domain and any Preview domain you actively use. Preview URLs can change between deployments.
+
+## Map provider
+
+The map uses Leaflet with OpenStreetMap tiles. It does not require a Google Maps API key or Google Cloud billing. Keep the visible OpenStreetMap attribution in the map. Follow the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/) when using the public tile server.
+
+## Local development
+
+Copy `.env.example` to `.env.local`, then set `VITE_API_BASE_URL` to the local backend origin (default `http://localhost:8000`). Configure the backend with the variables in `backend/.env.example`.
