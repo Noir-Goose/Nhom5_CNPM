@@ -80,6 +80,7 @@ function AdminDashboard({ onNavigate }) {
   const cards = [
     { icon: "📍", label: "Địa điểm trong hệ thống", value: data.pois.length, tone: "green" },
     { icon: "👥", label: "Tài khoản", value: data.users.length, tone: "blue" },
+    { icon: "👣", label: "Lượt truy cập (30 ngày)", value: data.tourAnalytics?.summary?.visits ?? 0, tone: "purple" },
     { icon: "🪪", label: "Chủ địa điểm chờ duyệt", value: data.pendingOwners.length, tone: "orange" },
     { icon: "📝", label: "Địa điểm chờ duyệt", value: data.pendingSubmissions.length, tone: "purple" },
   ];

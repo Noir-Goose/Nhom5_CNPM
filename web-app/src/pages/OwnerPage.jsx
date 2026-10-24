@@ -4,6 +4,7 @@ import { poiCategoryOptions } from "../data/categories";
 import {
   submitPoiRequest,
   resubmitPoiRequest,
+  translatePoiContent,
 } from "../services/authService";
 import LocationPicker from "../components/map/LocationPicker";
 import SubmissionStatus from "../components/owner/submissions/SubmissionStatus";
@@ -50,6 +51,7 @@ function OwnerPage() {
   const [activeLanguage, setActiveLanguage] = useState("vi");
   const [editingSubmission, setEditingSubmission] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [statusRefreshKey, setStatusRefreshKey] = useState(0);
@@ -85,6 +87,30 @@ function OwnerPage() {
         [name]: value,
       },
     }));
+  }
+
+  async function handleAutoTranslate() {
+    clearAlerts();
+    const vietnamese = content.vi;
+    if (!vietnamese.name.trim() || !vietnamese.description.trim() || !vietnamese.category.trim()) {
+      setError("Vui lòng nhập đủ tên, mô tả và danh mục bằng tiếng Việt trước khi dịch.");
+      setActiveLanguage("vi");
+      return;
+    }
+    setIsTranslating(true);
+    try {
+      const result = await translatePoiContent({
+        name: vietnamese.name.trim(),
+        description: vietnamese.description.trim(),
+        category: vietnamese.category.trim(),
+      });
+      setContent((current) => ({ ...current, ...result.content }));
+      setMessage("Đã dịch nội dung sang tiếng Anh, Trung, Nhật và Hàn. Vui lòng rà soát bản dịch trước khi gửi.");
+    } catch (translateError) {
+      setError(translateError.message || "Không thể tự dịch nội dung POI.");
+    } finally {
+      setIsTranslating(false);
+    }
   }
 
   function handleEditSubmission(submission) {
@@ -424,6 +450,10 @@ function OwnerPage() {
                         Nhập tên, mô tả và danh mục hiển thị cho đủ
                         5 ngôn ngữ trước khi gửi.
                       </p>
+
+                      <button type="button" className="owner-translate-button" onClick={handleAutoTranslate} disabled={isTranslating || isSubmitting}>
+                        {isTranslating ? "Đang dịch..." : "Dịch từ tiếng Việt"}
+                      </button>
 
                       <div
                         className="owner-language-tabs"

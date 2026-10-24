@@ -20,6 +20,7 @@ import useIsMobile from "./hooks/useIsMobile";
 
 import { saveLanguage } from "./services/languageService";
 import { loadPois } from "./services/poiService";
+import { recordPageVisit } from "./services/tourAnalyticsService";
 
 // [QR-001] Ưu tiên ngôn ngữ trong link QR, sau đó dùng lựa chọn đã lưu.
 function getInitialLanguage() {
@@ -41,6 +42,16 @@ function getInitialLanguage() {
 }
 
 function MapApp() {
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem("q4-visit-recorded")) return;
+      window.sessionStorage.setItem("q4-visit-recorded", "1");
+      recordPageVisit().catch((error) => console.warn("Could not record page visit:", error));
+    } catch {
+      recordPageVisit().catch((error) => console.warn("Could not record page visit:", error));
+    }
+  }, []);
+
   // [DEVICE-001] Hoi va ghi nho che do bo cuc thiet bi tren trinh duyet.
   const getSavedDeviceMode = () => {
     try {

@@ -18,6 +18,22 @@ class TourEventRequest(BaseModel):
     durationSeconds: int | None = Field(default=None, ge=0, le=7200)
 
 
+@router.post("/api/v1/analytics/visits", status_code=status.HTTP_202_ACCEPTED)
+def record_page_visit(request: Request):
+    """Record one anonymous public-site visit; the client limits this to once per tab session."""
+    database = getattr(request.app.state, "database", None)
+    if database is None:
+        raise HTTPException(status_code=503, detail="Database is not ready")
+    try:
+        database["tour_analytics"].insert_one({
+            "eventType": "visit",
+            "createdAt": datetime.now(UTC),
+        })
+        return {"accepted": True}
+    except PyMongoError as error:
+        raise HTTPException(status_code=503, detail="Could not save visit") from error
+
+
 @router.post("/api/v1/analytics/tour-events", status_code=status.HTTP_202_ACCEPTED)
 def record_tour_event(payload: TourEventRequest, request: Request):
     """Store an anonymous play-start or play-complete event for a known POI."""
@@ -77,6 +93,7 @@ def get_tour_analytics(
         summary = {row["_id"]: row for row in summary_rows}
         starts = summary.get("started", {}).get("count", 0)
         completions = summary.get("completed", {}).get("count", 0)
+        visits = summary.get("visit", {}).get("count", 0)
 
         top_poi_rows = list(events.aggregate([
             {"$match": {**match, "eventType": "started"}},
@@ -101,7 +118,7 @@ def get_tour_analytics(
             {"$sort": {"count": -1}},
         ]))
         daily_rows = list(events.aggregate([
-            {"$match": match},
+            {"$match": {**match, "eventType": {"$in": ["started", "completed", "visit"]}}},
             {"$group": {
                 "_id": {
                     "date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$createdAt", "timezone": "UTC"}},
@@ -117,8 +134,9 @@ def get_tour_analytics(
     daily: dict[str, dict[str, Any]] = {}
     for row in daily_rows:
         date = row["_id"]["date"]
-        daily.setdefault(date, {"date": date, "starts": 0, "completions": 0})
-        key = "starts" if row["_id"]["eventType"] == "started" else "completions"
+        daily.setdefault(date, {"date": date, "starts": 0, "completions": 0, "visits": 0})
+        event_type = row["_id"]["eventType"]
+        key = {"started": "starts", "completed": "completions", "visit": "visits"}[event_type]
         daily[date][key] = row["count"]
 
     total_duration = summary.get("completed", {}).get("duration", 0)
@@ -127,6 +145,7 @@ def get_tour_analytics(
         "summary": {
             "starts": starts,
             "completions": completions,
+            "visits": visits,
             "completionRate": round(completions / starts * 100, 1) if starts else 0,
             "averageDurationSeconds": round(total_duration / completions) if completions else 0,
         },

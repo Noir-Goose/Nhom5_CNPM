@@ -3,6 +3,15 @@ const API_BASE_URL = (
 ).replace(/\/$/, "");
 
 // [TOUR-AN-003] Gửi sự kiện nghe ẩn danh; lỗi analytics không làm gián đoạn phát giọng đọc.
+export async function recordPageVisit() {
+  const response = await fetch(`${API_BASE_URL}/api/v1/analytics/visits`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    keepalive: true,
+  });
+  if (!response.ok) throw new Error(`Visit analytics request failed (${response.status})`);
+}
+
 export async function recordTourEvent(event) {
   const response = await fetch(`${API_BASE_URL}/api/v1/analytics/tour-events`, {
     method: "POST",

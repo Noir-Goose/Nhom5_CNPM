@@ -399,6 +399,23 @@
   margin: 14px 0;
 }
 
+.owner-translate-button {
+  margin: 0 0 12px;
+  padding: 9px 14px;
+  border: 1px solid #b9d7c5;
+  border-radius: 8px;
+  background: #eef8f1;
+  color: #236b43;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.owner-translate-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .owner-language-tabs button {
   padding: 9px 13px;
   border: 1px solid #d8e1d9;

@@ -14,6 +14,13 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadowUrl,
 });
 
+const userLocationIcon = L.divIcon({
+  className: "user-location-icon",
+  html: '<span class="user-location-dot" aria-hidden="true"></span>',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+});
+
 function getPoiCoordinates(poi) {
   if (!poi) return null;
   const rawLatitude = poi.latitude ?? poi.location?.latitude ?? poi.lat;
@@ -123,7 +130,7 @@ export default function MapView({ pois = [], selectedPoi, language, onSelectPoi 
           );
         })}
 
-        {userLocation && <Marker position={userLocation}><Popup>{text("currentLocation")}</Popup></Marker>}
+        {userLocation && <Marker position={userLocation} icon={userLocationIcon}><Popup>{text("currentLocation")}</Popup></Marker>}
       </MapContainer>
 
       {locationError && <p className="location-error" role="alert">{text(locationError)}</p>}

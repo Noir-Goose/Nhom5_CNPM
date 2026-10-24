@@ -102,3 +102,17 @@ export async function resubmitPoiRequest(submissionId, poiData) {
     "Không thể gửi lại yêu cầu chỉnh sửa địa điểm."
   );
 }
+
+export async function translatePoiContent(content) {
+  const token = getAccessToken();
+  const response = await fetch(`${API_BASE_URL}/api/v1/owner/poi/translate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ content }),
+  });
+  return parseResponse(response, "Không thể tự dịch nội dung POI.");
+}

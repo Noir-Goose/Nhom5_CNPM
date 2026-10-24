@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 from app.poi.router import router as poi_owner_router
+from app.poi.translation import router as poi_translation_router
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -115,6 +116,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(admin_poi_router)
 app.include_router(poi_owner_router)
+app.include_router(poi_translation_router)
 app.include_router(admin_router)
 app.include_router(admin_users_router)
 app.include_router(admin_audit_router)
