@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from pymongo.errors import PyMongoError
 
 from app.auth.admin_dependencies import get_current_admin
-
+#Settment for the time window to consider a visitor as "active" in seconds
 router = APIRouter(tags=["Tour analytics"])
 ACTIVE_VISITOR_SECONDS = 90
 
