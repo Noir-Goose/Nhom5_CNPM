@@ -14,7 +14,8 @@ def send_otp_email(recipient: str, otp: str) -> None:
     smtp_host = os.getenv("SMTP_HOST", "").strip()
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_username = os.getenv("SMTP_USERNAME", "").strip()
-    smtp_password = os.getenv("SMTP_PASSWORD", "").strip()
+    # Gmail displays App Passwords in groups; SMTP authentication needs the spaces removed.
+    smtp_password = "".join(os.getenv("SMTP_PASSWORD", "").split())
     from_email = os.getenv("SMTP_FROM_EMAIL", "").strip()
 
     if not all(

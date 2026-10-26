@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import logging
 import os
 import secrets
 from datetime import UTC, datetime, timedelta
@@ -33,6 +34,7 @@ OTP_SECRET = os.getenv("JWT_SECRET_KEY", "").strip()
 OTP_TTL_MINUTES = 10
 OTP_MAX_ATTEMPTS = 5
 OTP_RESEND_COOLDOWN_SECONDS = 60
+logger = logging.getLogger(__name__)
 
 
 def _hash_otp(email: str, otp: str) -> str:
@@ -107,6 +109,7 @@ def start_registration(
     try:
         send_otp_email(email, otp)
     except Exception as error:
+        logger.error("POI Owner verification email failed (%s)", type(error).__name__)
         verifications.delete_one(
             {
                 "email": email,
@@ -239,6 +242,7 @@ def resend_registration_otp(
     try:
         send_otp_email(email, otp)
     except Exception as error:
+        logger.error("POI Owner OTP resend failed (%s)", type(error).__name__)
         # Do not leave a verification record with an OTP
         # that was not successfully sent.
         verifications.delete_one(
