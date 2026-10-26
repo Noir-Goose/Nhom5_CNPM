@@ -8,6 +8,45 @@ from pymongo.errors import PyMongoError
 from app.auth.admin_dependencies import get_current_admin
 
 router = APIRouter(tags=["Tour analytics"])
+ACTIVE_VISITOR_SECONDS = 90
+
+
+class VisitorPresenceRequest(BaseModel):
+    visitorId: str = Field(min_length=20, max_length=80, pattern=r"^[A-Za-z0-9-]+$")
+
+
+@router.post("/api/v1/analytics/presence", status_code=status.HTTP_202_ACCEPTED)
+def update_visitor_presence(payload: VisitorPresenceRequest, request: Request):
+    """Refresh anonymous browser-session presence while the public app is visible."""
+    database = getattr(request.app.state, "database", None)
+    if database is None:
+        raise HTTPException(status_code=503, detail="Database is not ready")
+    try:
+        database["visitor_presence"].update_one(
+            {"_id": payload.visitorId},
+            {"$set": {"lastSeenAt": datetime.now(UTC)}},
+            upsert=True,
+        )
+        return {"accepted": True}
+    except PyMongoError as error:
+        raise HTTPException(status_code=503, detail="Could not update visitor presence") from error
+
+
+@router.get("/api/v1/admin/analytics/active-visitors")
+def get_active_visitors(
+    request: Request,
+    _admin: dict[str, Any] = Depends(get_current_admin),
+):
+    """Count anonymous browser sessions seen in the last 90 seconds."""
+    database = getattr(request.app.state, "database", None)
+    if database is None:
+        raise HTTPException(status_code=503, detail="Database is not ready")
+    threshold = datetime.now(UTC) - timedelta(seconds=ACTIVE_VISITOR_SECONDS)
+    try:
+        count = database["visitor_presence"].count_documents({"lastSeenAt": {"$gte": threshold}})
+        return {"activeVisitors": count, "windowSeconds": ACTIVE_VISITOR_SECONDS}
+    except PyMongoError as error:
+        raise HTTPException(status_code=503, detail="Could not load active visitors") from error
 
 
 class TourEventRequest(BaseModel):

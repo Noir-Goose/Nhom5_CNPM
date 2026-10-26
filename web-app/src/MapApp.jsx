@@ -20,7 +20,7 @@ import useIsMobile from "./hooks/useIsMobile";
 
 import { saveLanguage } from "./services/languageService";
 import { loadPois } from "./services/poiService";
-import { recordPageVisit } from "./services/tourAnalyticsService";
+import { recordPageVisit, recordVisitorPresence } from "./services/tourAnalyticsService";
 
 // [QR-001] Ưu tiên ngôn ngữ trong link QR, sau đó dùng lựa chọn đã lưu.
 function getInitialLanguage() {
@@ -50,6 +50,34 @@ function MapApp() {
     } catch {
       recordPageVisit().catch((error) => console.warn("Could not record page visit:", error));
     }
+  }, []);
+
+  useEffect(() => {
+    const createVisitorId = () => window.crypto?.randomUUID?.() ??
+      `visitor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    let visitorId;
+    try {
+      visitorId = window.sessionStorage.getItem("q4-visitor-session");
+      if (!visitorId) {
+        visitorId = createVisitorId();
+        window.sessionStorage.setItem("q4-visitor-session", visitorId);
+      }
+    } catch {
+      visitorId = createVisitorId();
+    }
+
+    const updatePresence = () => {
+      if (document.visibilityState === "visible") {
+        recordVisitorPresence(visitorId).catch(() => {});
+      }
+    };
+    updatePresence();
+    const intervalId = window.setInterval(updatePresence, 30_000);
+    document.addEventListener("visibilitychange", updatePresence);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", updatePresence);
+    };
   }, []);
 
   // [DEVICE-001] Hoi va ghi nho che do bo cuc thiet bi tren trinh duyet.

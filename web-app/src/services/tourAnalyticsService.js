@@ -12,6 +12,16 @@ export async function recordPageVisit() {
   if (!response.ok) throw new Error(`Visit analytics request failed (${response.status})`);
 }
 
+export async function recordVisitorPresence(visitorId) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/analytics/presence`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ visitorId }),
+    keepalive: true,
+  });
+  if (!response.ok) throw new Error(`Visitor presence request failed (${response.status})`);
+}
+
 export async function recordTourEvent(event) {
   const response = await fetch(`${API_BASE_URL}/api/v1/analytics/tour-events`, {
     method: "POST",
@@ -40,5 +50,18 @@ export async function getTourAnalytics(days = 30) {
     throw new Error(typeof data.detail === "string" ? data.detail : "Không thể tải thống kê tour.");
   }
 
+  return data;
+}
+
+export async function getActiveVisitors() {
+  const token = localStorage.getItem("access_token");
+  if (!token) throw new Error("Vui lòng đăng nhập Admin để xem số người đang tham gia.");
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/analytics/active-visitors`, {
+    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(typeof data.detail === "string" ? data.detail : "Không thể tải số người đang tham gia.");
+  }
   return data;
 }

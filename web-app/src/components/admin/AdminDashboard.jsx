@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getPoiOwnerRegistrations } from "../../services/adminService";
 import { getPoiSubmissions, getSystemPois } from "../../services/adminPoiService";
 import { getUsers } from "../../services/adminUserService";
-import { getTourAnalytics } from "../../services/tourAnalyticsService";
+import { getActiveVisitors, getTourAnalytics } from "../../services/tourAnalyticsService";
 
 const initialData = {
   pendingOwners: [],
@@ -11,11 +11,12 @@ const initialData = {
   users: [],
   tourAnalytics: null,
   tourAnalyticsError: "",
+  activeVisitors: null,
 };
 
 // [ADMIN-DASH-001] Lấy và chuẩn hóa dữ liệu Dashboard từ các API Admin.
 async function requestDashboardData() {
-  const [pendingOwners, pendingSubmissions, pois, users, analyticsResult] = await Promise.all([
+  const [pendingOwners, pendingSubmissions, pois, users, analyticsResult, activeVisitorResult] = await Promise.all([
     getPoiOwnerRegistrations("pending"),
     getPoiSubmissions("pending"),
     getSystemPois(),
@@ -23,6 +24,7 @@ async function requestDashboardData() {
     getTourAnalytics(30)
       .then((tourAnalytics) => ({ tourAnalytics, tourAnalyticsError: "" }))
       .catch((error) => ({ tourAnalytics: null, tourAnalyticsError: error.message })),
+    getActiveVisitors().catch(() => null),
   ]);
 
   return {
@@ -30,6 +32,7 @@ async function requestDashboardData() {
     pendingSubmissions: Array.isArray(pendingSubmissions) ? pendingSubmissions : [],
     pois: Array.isArray(pois) ? pois : [],
     users: Array.isArray(users) ? users : [],
+    activeVisitors: activeVisitorResult?.activeVisitors ?? null,
     ...analyticsResult,
   };
 }
@@ -77,10 +80,30 @@ function AdminDashboard({ onNavigate }) {
     };
   }, []);
 
+  useEffect(() => {
+    let isActive = true;
+    const refreshActiveVisitors = async () => {
+      try {
+        const result = await getActiveVisitors();
+        if (isActive) {
+          setData((current) => ({ ...current, activeVisitors: result.activeVisitors }));
+        }
+      } catch {
+        // Keep the last successfully loaded count if the analytics endpoint is temporarily unavailable.
+      }
+    };
+    const intervalId = window.setInterval(refreshActiveVisitors, 30_000);
+    return () => {
+      isActive = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   const cards = [
     { icon: "📍", label: "Địa điểm trong hệ thống", value: data.pois.length, tone: "green" },
     { icon: "👥", label: "Tài khoản", value: data.users.length, tone: "blue" },
     { icon: "👣", label: "Lượt truy cập (30 ngày)", value: data.tourAnalytics?.summary?.visits ?? 0, tone: "purple" },
+    { icon: "🟢", label: "Phiên đang tham gia", value: data.activeVisitors, tone: "green" },
     { icon: "🪪", label: "Chủ địa điểm chờ duyệt", value: data.pendingOwners.length, tone: "orange" },
     { icon: "📝", label: "Địa điểm chờ duyệt", value: data.pendingSubmissions.length, tone: "purple" },
   ];
@@ -111,7 +134,7 @@ function AdminDashboard({ onNavigate }) {
             <span className={`dashboard-stat-icon ${card.tone}`} aria-hidden="true">{card.icon}</span>
             <div>
               <p>{card.label}</p>
-              <strong>{isLoading ? "—" : card.value}</strong>
+              <strong>{isLoading || card.value == null ? "—" : card.value}</strong>
             </div>
           </article>
         ))}

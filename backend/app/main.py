@@ -89,6 +89,14 @@ async def lifespan(app: FastAPI):
             database["tour_analytics"].create_index("createdAt")
         except PyMongoError as index_error:
             print(f"Could not create tour analytics index: {index_error}")
+        try:
+            database["visitor_presence"].create_index(
+                "lastSeenAt",
+                expireAfterSeconds=180,
+                name="visitor_presence_ttl",
+            )
+        except PyMongoError as index_error:
+            print(f"Could not create visitor presence TTL index: {index_error}")
         seed_initial_pois()
         print(f"Connected to MongoDB database: {MONGODB_DB_NAME}")
     except Exception:
