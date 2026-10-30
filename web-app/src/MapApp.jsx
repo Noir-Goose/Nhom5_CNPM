@@ -19,7 +19,7 @@ import PoiBottomSheet from "./components/PoiBottomSheet";
 import useIsMobile from "./hooks/useIsMobile";
 
 import { saveLanguage } from "./services/languageService";
-import { loadPois } from "./services/poiService";
+import { getPoiById, loadPois } from "./services/poiService";
 import { recordPageVisit, recordVisitorPresence } from "./services/tourAnalyticsService";
 
 // [QR-001] Ưu tiên ngôn ngữ trong link QR, sau đó dùng lựa chọn đã lưu.
@@ -101,6 +101,9 @@ function MapApp() {
   const [selectedPoi, setSelectedPoi] =
     useState(null);
 
+  const [isLoadingPoiDetails, setIsLoadingPoiDetails] = useState(false);
+  const [poiDetailsError, setPoiDetailsError] = useState("");
+
   const [isPoiDetailsOpen, setIsPoiDetailsOpen] =
   useState(false);
 
@@ -176,6 +179,33 @@ function MapApp() {
 
     fetchPois();
   }, []);
+
+  useEffect(() => {
+    if (!isPoiDetailsOpen || selectedPoi?.id == null) return undefined;
+
+    let isActive = true;
+    setIsLoadingPoiDetails(true);
+    setPoiDetailsError("");
+
+    getPoiById(selectedPoi.id)
+      .then((poiDetails) => {
+        if (isActive) setSelectedPoi(poiDetails);
+      })
+      .catch((error) => {
+        if (isActive) {
+          setPoiDetailsError(
+            error.message || "Không thể tải thông tin địa điểm. Vui lòng thử lại.",
+          );
+        }
+      })
+      .finally(() => {
+        if (isActive) setIsLoadingPoiDetails(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [isPoiDetailsOpen, selectedPoi?.id]);
 
   // =========================
   // Language
@@ -279,8 +309,14 @@ function MapApp() {
     const handleSelectPoi = (poi) => {
     window.speechSynthesis?.cancel();
 
+    setIsLoadingPoiDetails(poi?.id != null);
+    setPoiDetailsError("");
     setSelectedPoi(poi);
     setIsPoiDetailsOpen(true);
+
+    if (poi?.id == null) {
+      setPoiDetailsError("Địa điểm không có mã định danh hợp lệ.");
+    }
 
     // Đóng dropdown POI và hạ bàn phím
         // Chỉ áp dụng trên mobile: đóng dropdown POI và hạ bàn phím
@@ -315,6 +351,8 @@ function MapApp() {
   window.speechSynthesis?.cancel();
 
   setIsPoiDetailsOpen(false);
+  setIsLoadingPoiDetails(false);
+  setPoiDetailsError("");
   };
 
   // QR mở ứng dụng bản đồ chung.
@@ -371,6 +409,8 @@ function MapApp() {
       selectedPoi={selectedPoi}
       language={language}
       speechLanguage={speechLanguage}
+      isLoading={isLoadingPoiDetails}
+      error={poiDetailsError}
       onClose={handleClosePoi}
       onGetPoiQr={handleOpenPoiQr}
     />

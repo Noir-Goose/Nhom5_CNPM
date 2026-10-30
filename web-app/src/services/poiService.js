@@ -27,3 +27,25 @@ export async function loadPois(language = "vi") {
 
   return pois;
 }
+
+export async function getPoiById(poiId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/poi/${encodeURIComponent(poiId)}`,
+    { headers: { Accept: "application/json" } },
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(
+      typeof data.detail === "string"
+        ? data.detail
+        : `Không thể tải thông tin địa điểm. HTTP ${response.status}`,
+    );
+  }
+
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error("Dữ liệu chi tiết địa điểm không hợp lệ.");
+  }
+
+  return data;
+}

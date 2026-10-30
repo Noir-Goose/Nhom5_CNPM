@@ -5,6 +5,8 @@ function SelectedPoiPanel({
   selectedPoi,
   language,
   speechLanguage,
+  isLoading = false,
+  error = "",
   onClose,
   onGetPoiQr,
 }) {
@@ -35,6 +37,30 @@ function SelectedPoiPanel({
     uiLabels?.closePoi?.[language] ??
     uiLabels?.closePoi?.vi ??
     "Đóng";
+
+  if (isLoading || error) {
+    return (
+      <section className="selected-poi" aria-busy={isLoading}>
+        <div className="selected-poi-info">
+          <div className="selected-poi-heading">
+            <span className="selected-label">{selectedLabel}</span>
+            <button
+              type="button"
+              className="close-poi-button"
+              onClick={onClose}
+              aria-label={closeLabel}
+              title={closeLabel}
+            >
+              ×
+            </button>
+          </div>
+          <p className="selected-description" role={error ? "alert" : "status"}>
+            {error || "Đang tải thông tin địa điểm..."}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section

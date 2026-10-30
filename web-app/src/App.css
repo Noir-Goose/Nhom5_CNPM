@@ -689,6 +689,28 @@ select:focus-visible {
   min-width: 0;
 }
 
+.audio-player-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.audio-player-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 320px);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.audio-player-progress input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--green);
+}
+
 .audio-player-button {
   display: inline-flex;
   align-items: center;
@@ -706,6 +728,17 @@ select:focus-visible {
 
 .audio-player-button:hover:not(:disabled) {
   background: var(--green-dark);
+}
+
+.audio-player-stop {
+  min-height: 41px;
+  padding: 9px 12px;
+  color: var(--green-dark);
+  font-size: 13px;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid var(--green);
+  border-radius: 10px;
 }
 
 .audio-player-error {

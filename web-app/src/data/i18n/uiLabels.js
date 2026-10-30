@@ -19,7 +19,10 @@ export const uiLabels = {
   closePoi: { vi: "Đóng", en: "Close", zh: "关闭", ja: "閉じる", ko: "닫기" },
   audio: {
     play: { vi: "🔊 Nghe thuyết minh", en: "🔊 Listen to narration", zh: "🔊 播放讲解", ja: "🔊 音声ガイドを聞く", ko: "🔊 음성 안내 듣기" },
-    stop: { vi: "⏹ Dừng thuyết minh", en: "⏹ Stop narration", zh: "⏹ 停止讲解", ja: "⏹ 音声ガイドを停止", ko: "⏹ 안내 음성 중지" },
+    pause: { vi: "⏸ Tạm dừng", en: "⏸ Pause", zh: "⏸ 暂停", ja: "⏸ 一時停止", ko: "⏸ 일시 정지" },
+    resume: { vi: "▶ Tiếp tục", en: "▶ Resume", zh: "▶ 继续", ja: "▶ 再開", ko: "▶ 계속 듣기" },
+    stop: { vi: "⏹ Dừng", en: "⏹ Stop", zh: "⏹ 停止", ja: "⏹ 停止", ko: "⏹ 중지" },
+    position: { vi: "Vị trí phát thuyết minh", en: "Narration position", zh: "讲解播放位置", ja: "音声ガイドの再生位置", ko: "안내 음성 재생 위치" },
     unsupported: { vi: "Trình duyệt không hỗ trợ thuyết minh.", en: "This browser does not support speech narration.", zh: "此浏览器不支持语音讲解。", ja: "このブラウザーは音声読み上げに対応していません。", ko: "이 브라우저는 음성 안내를 지원하지 않습니다." },
     empty: { vi: "Địa điểm chưa có nội dung thuyết minh.", en: "No narration content is available for this place.", zh: "此地点暂无讲解内容。", ja: "この場所には音声ガイドの内容がありません。", ko: "이 장소에는 음성 안내 콘텐츠가 없습니다." },
     error: { vi: "Không thể phát thuyết minh. Vui lòng thử lại.", en: "Unable to play narration. Please try again.", zh: "无法播放讲解，请重试。", ja: "音声ガイドを再生できません。もう一度お試しください。", ko: "음성 안내를 재생할 수 없습니다. 다시 시도하세요." },
