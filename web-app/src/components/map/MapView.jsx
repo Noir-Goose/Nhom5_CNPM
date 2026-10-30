@@ -99,7 +99,7 @@ export default function MapView({ pois = [], selectedPoi, language, onSelectPoi 
       setIsLocating(false);
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
   };
-
+// dòng 111 là báo lỗi khi sever hoặc dịch vụ bên thứ ba bị lỗi .
   return (
     <div className="map-view">
       <div className="map-toolbar">
