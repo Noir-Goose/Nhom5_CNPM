@@ -173,7 +173,7 @@ export default function OwnerRegisterPage() {
                 onChange={handleChange}
                 minLength={3}
                 maxLength={30}
-                pattern="[A-Za-z0-9_.-]+"
+                pattern={String.raw`[A-Za-z0-9_.\x2d]+`}
                 required
               />
 
