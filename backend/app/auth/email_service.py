@@ -1,39 +1,62 @@
+import json
 import os
-import smtplib
-from email.message import EmailMessage
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from dotenv import load_dotenv
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BACKEND_DIR / ".env")
-SMTP_KEY_MIN_LENGTH = 15
+
+BREVO_EMAIL_API_URL = "https://api.brevo.com/v3/smtp/email"
 
 
 def send_otp_email(recipient: str, otp: str) -> None:
-    """Send an email containing an OTP through Brevo SMTP."""
-    smtp_host = os.getenv("SMTP_HOST", "smtp-relay.brevo.com").strip()
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_username = os.getenv("SMTP_USERNAME", "").strip()
-    smtp_password = os.getenv("SMTP_PASSWORD", "").strip()
-    from_email = os.getenv("SMTP_FROM_EMAIL", "").strip()
+    """Send an email containing an OTP through Brevo's HTTPS API."""
+    api_key = os.getenv("BREVO_API_KEY", "").strip()
+    sender_email = os.getenv("BREVO_SENDER_EMAIL", "").strip()
+    sender_name = os.getenv("BREVO_SENDER_NAME", "FoodTour").strip()
 
-    if not all([smtp_host, smtp_username, smtp_password, from_email]):
-        raise RuntimeError("Brevo SMTP settings are incomplete in backend/.env")
-    if len(smtp_password) < SMTP_KEY_MIN_LENGTH:
-        raise RuntimeError("SMTP_PASSWORD must contain at least 15 characters")
+    if not all([api_key, sender_email, sender_name]):
+        raise RuntimeError("Brevo API settings are incomplete")
 
-    message = EmailMessage()
-    message["Subject"] = "Verify your POI Owner account"
-    message["From"] = from_email
-    message["To"] = recipient
-    message.set_content(
+    text_content = (
         f"Your email verification code is: {otp}\n\n"
         "This code is for email verification. Do not share it with anyone.\n"
         "If you did not request this code, you can ignore this email."
     )
+    payload = {
+        "sender": {"name": sender_name, "email": sender_email},
+        "to": [{"email": recipient}],
+        "subject": "Verify your POI Owner account",
+        "textContent": text_content,
+    }
+    request = Request(
+        BREVO_EMAIL_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json",
+        },
+        method="POST",
+    )
 
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        server.send_message(message)
+    try:
+        with urlopen(request, timeout=20) as response:
+            if response.status != 201:
+                raise RuntimeError(
+                    f"Brevo email API returned unexpected HTTP {response.status}"
+                )
+    except HTTPError as error:
+        # Do not log the response body; provider responses can include recipient data.
+        raise RuntimeError(
+            f"Brevo email API rejected the request (HTTP {error.code})"
+        ) from error
+    except URLError as error:
+        # Preserve a useful network failure category without exposing request details.
+        reason = error.reason
+        raise RuntimeError(
+            f"Brevo email API connection failed ({type(reason).__name__})"
+        ) from error

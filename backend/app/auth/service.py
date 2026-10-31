@@ -129,11 +129,8 @@ def start_registration(
     try:
         send_otp_email(email, otp)
     except Exception as error:
-        smtp_code = getattr(error, "smtp_code", None)
         if isinstance(error, RuntimeError):
             diagnostic = str(error)
-        elif smtp_code is not None:
-            diagnostic = f"SMTP response code {smtp_code}"
         else:
             diagnostic = type(error).__name__
         logger.error("POI Owner verification email failed: %s", diagnostic)
@@ -275,11 +272,8 @@ def resend_registration_otp(
     try:
         send_otp_email(email, otp)
     except Exception as error:
-        smtp_code = getattr(error, "smtp_code", None)
         if isinstance(error, RuntimeError):
             diagnostic = str(error)
-        elif smtp_code is not None:
-            diagnostic = f"SMTP response code {smtp_code}"
         else:
             diagnostic = type(error).__name__
         logger.error("POI Owner OTP resend failed: %s", diagnostic)
