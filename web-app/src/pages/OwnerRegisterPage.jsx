@@ -9,6 +9,7 @@ const API_BASE_URL = (
 export default function OwnerRegisterPage() {
   const [step, setStep] = useState("register");
   const [form, setForm] = useState({
+    account_name: "",
     full_name: "",
     email: "",
     password: "",
@@ -161,6 +162,21 @@ export default function OwnerRegisterPage() {
             </p>
 
             <form onSubmit={handleRegister}>
+              <label htmlFor="account_name">Tên tài khoản</label>
+              <input
+                id="account_name"
+                name="account_name"
+                type="text"
+                autoComplete="username"
+                placeholder="3–30 ký tự: chữ, số, ., _ hoặc -"
+                value={form.account_name}
+                onChange={handleChange}
+                minLength={3}
+                maxLength={30}
+                pattern="[A-Za-z0-9_.-]+"
+                required
+              />
+
               <label htmlFor="full_name">Họ và tên</label>
               <input
                 id="full_name"

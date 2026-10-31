@@ -7,21 +7,21 @@ from dotenv import load_dotenv
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BACKEND_DIR / ".env")
+SMTP_KEY_MIN_LENGTH = 15
 
 
 def send_otp_email(recipient: str, otp: str) -> None:
-    """Send an email containing an OTP to the recipient."""
-    smtp_host = os.getenv("SMTP_HOST", "").strip()
+    """Send an email containing an OTP through Brevo SMTP."""
+    smtp_host = os.getenv("SMTP_HOST", "smtp-relay.brevo.com").strip()
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_username = os.getenv("SMTP_USERNAME", "").strip()
-    # Gmail displays App Passwords in groups; SMTP authentication needs the spaces removed.
-    smtp_password = "".join(os.getenv("SMTP_PASSWORD", "").split())
+    smtp_password = os.getenv("SMTP_PASSWORD", "").strip()
     from_email = os.getenv("SMTP_FROM_EMAIL", "").strip()
 
-    if not all(
-        [smtp_host, smtp_username, smtp_password, from_email]
-    ):
-        raise RuntimeError("SMTP settings are incomplete in backend/.env")
+    if not all([smtp_host, smtp_username, smtp_password, from_email]):
+        raise RuntimeError("Brevo SMTP settings are incomplete in backend/.env")
+    if len(smtp_password) < SMTP_KEY_MIN_LENGTH:
+        raise RuntimeError("SMTP_PASSWORD must contain at least 15 characters")
 
     message = EmailMessage()
     message["Subject"] = "Verify your POI Owner account"
@@ -29,8 +29,7 @@ def send_otp_email(recipient: str, otp: str) -> None:
     message["To"] = recipient
     message.set_content(
         f"Your email verification code is: {otp}\n\n"
-        "This code is for email verification. "
-        "Do not share it with anyone.\n"
+        "This code is for email verification. Do not share it with anyone.\n"
         "If you did not request this code, you can ignore this email."
     )
 

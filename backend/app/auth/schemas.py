@@ -11,6 +11,17 @@ FullName = Annotated[
     ),
 ]
 
+AccountName = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        to_lower=True,
+        min_length=3,
+        max_length=30,
+        pattern=r"^[a-zA-Z0-9_.-]+$",
+    ),
+]
+
 Password = Annotated[
     str,
     StringConstraints(
@@ -28,6 +39,7 @@ OtpCode = Annotated[
 class OwnerRegistrationRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
+    account_name: AccountName
     full_name: FullName
     email: EmailStr
     password: Password

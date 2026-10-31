@@ -60,6 +60,16 @@ def _ensure_indexes(database: Database) -> None:
         [("email", ASCENDING)],
         unique=True,
     )
+    database["users"].create_index(
+        [("accountName", ASCENDING)],
+        unique=True,
+        sparse=True,
+    )
+    database["email_verifications"].create_index(
+        [("accountName", ASCENDING)],
+        unique=True,
+        sparse=True,
+    )
 
 
 def start_registration(
@@ -70,11 +80,21 @@ def start_registration(
     _ensure_indexes(database)
 
     email = str(request.email).strip().lower()
+    account_name = request.account_name.strip().lower()
     users = database["users"]
     verifications = database["email_verifications"]
 
     if users.find_one({"email": email}, {"_id": 1}):
         raise ValueError("This email is already registered")
+
+    if users.find_one({"accountName": account_name}, {"_id": 1}):
+        raise ValueError("This account name is already registered")
+
+    if verifications.find_one(
+        {"accountName": account_name, "email": {"$ne": email}},
+        {"_id": 1},
+    ):
+        raise ValueError("This account name is already in use")
 
     existing = verifications.find_one({"email": email})
 
@@ -89,6 +109,7 @@ def start_registration(
 
     record = {
         "email": email,
+        "accountName": account_name,
         "fullName": request.full_name,
         "passwordHash": hash_password(request.password),
         "otpHash": _hash_otp(email, otp),
@@ -100,11 +121,10 @@ def start_registration(
         "used": False,
     }
 
-    verifications.replace_one(
-        {"email": email},
-        record,
-        upsert=True,
-    )
+    try:
+        verifications.replace_one({"email": email}, record, upsert=True)
+    except DuplicateKeyError as error:
+        raise ValueError("This account name is already in use") from error
 
     try:
         send_otp_email(email, otp)
@@ -171,11 +191,17 @@ def verify_registration(
         "createdAt": now,
         "updatedAt": now,
     }
+    if record.get("accountName"):
+        user["accountName"] = record["accountName"]
 
     try:
         users.insert_one(user)
     except DuplicateKeyError as error:
         verifications.delete_one({"_id": record["_id"]})
+        if user.get("accountName") and users.find_one(
+            {"accountName": user["accountName"]}, {"_id": 1}
+        ):
+            raise ValueError("This account name is already registered") from error
         raise ValueError("This email is already registered") from error
 
     verifications.delete_one({"_id": record["_id"]})
