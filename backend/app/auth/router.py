@@ -5,13 +5,17 @@ from app.audit.service import record_audit_event
 from app.auth.security import create_access_token, verify_password
 from app.auth.schemas import (
     LoginRequest,
+    ForgotPasswordRequest,
     OwnerRegistrationRequest,
     ResendOtpRequest,
+    VerifyLoginOtpRequest,
     VerifyOtpRequest,
 )
 from app.auth.service import (
     resend_registration_otp,
+    start_login_otp,
     start_registration,
+    verify_login_otp,
     verify_registration,
 )
 
@@ -180,6 +184,65 @@ def login(payload: LoginRequest, request: Request):
         summary="User logged in successfully",
     )
 
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(user["_id"]),
+            "fullName": user.get("fullName", ""),
+            "email": email,
+            "role": role,
+        },
+    }
+
+
+@router.post("/forgot-password")
+def request_sign_in_otp(payload: ForgotPasswordRequest, request: Request):
+    """Request a password recovery/sign-in OTP by email."""
+    database = get_database(request)
+    try:
+        return start_login_otp(database, str(payload.email))
+    except RuntimeError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not send sign-in code",
+        ) from error
+    except PyMongoError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not process sign-in code request",
+        ) from error
+
+
+@router.post("/verify-login-otp")
+def login_with_otp(payload: VerifyLoginOtpRequest, request: Request):
+    """Complete password recovery by signing in with the emailed OTP."""
+    database = get_database(request)
+    try:
+        user = verify_login_otp(database, payload)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
+    except PyMongoError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not verify sign-in code",
+        ) from error
+
+    role = user["role"]
+    email = str(payload.email).strip().lower()
+    token = create_access_token(user_id=str(user["_id"]), role=role)
+    record_audit_event(
+        database,
+        actor=user,
+        action="auth.login",
+        resource_type="auth_session",
+        resource_id=None,
+        outcome="success",
+        summary="User signed in with an email OTP",
+    )
     return {
         "access_token": token,
         "token_type": "bearer",

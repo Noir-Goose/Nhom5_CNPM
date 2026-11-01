@@ -39,6 +39,26 @@ export async function login(email, password) {
   return parseResponse(response, "Đăng nhập thất bại.");
 }
 
+export async function requestLoginOtp(email) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  return parseResponse(response, "Không thể gửi mã đăng nhập.");
+}
+
+export async function loginWithOtp(email, otp) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-login-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp }),
+  });
+
+  return parseResponse(response, "Mã OTP không hợp lệ hoặc đã hết hạn.");
+}
+
 export async function submitPoiRequest(poiData) {
   const token = getAccessToken();
 

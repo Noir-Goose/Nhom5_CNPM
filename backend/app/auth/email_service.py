@@ -12,8 +12,8 @@ load_dotenv(BACKEND_DIR / ".env")
 BREVO_EMAIL_API_URL = "https://api.brevo.com/v3/smtp/email"
 
 
-def send_otp_email(recipient: str, otp: str) -> None:
-    """Send an email containing an OTP through Brevo's HTTPS API."""
+def send_otp_email(recipient: str, otp: str, purpose: str = "registration") -> None:
+    """Send a registration or sign-in OTP through Brevo's HTTPS API."""
     api_key = os.getenv("BREVO_API_KEY", "").strip()
     sender_email = os.getenv("BREVO_SENDER_EMAIL", "").strip()
     sender_name = os.getenv("BREVO_SENDER_NAME", "FoodTour").strip()
@@ -21,15 +21,24 @@ def send_otp_email(recipient: str, otp: str) -> None:
     if not all([api_key, sender_email, sender_name]):
         raise RuntimeError("Brevo API settings are incomplete")
 
-    text_content = (
-        f"Your email verification code is: {otp}\n\n"
-        "This code is for email verification. Do not share it with anyone.\n"
-        "If you did not request this code, you can ignore this email."
-    )
+    if purpose == "login":
+        subject = "Your POI Owner sign-in code"
+        text_content = (
+            f"Your sign-in code is: {otp}\n\n"
+            "This code lets you sign in to your account. Do not share it with anyone.\n"
+            "If you did not request this code, you can ignore this email."
+        )
+    else:
+        subject = "Verify your POI Owner account"
+        text_content = (
+            f"Your email verification code is: {otp}\n\n"
+            "This code is for email verification. Do not share it with anyone.\n"
+            "If you did not request this code, you can ignore this email."
+        )
     payload = {
         "sender": {"name": sender_name, "email": sender_email},
         "to": [{"email": recipient}],
-        "subject": "Verify your POI Owner account",
+        "subject": subject,
         "textContent": text_content,
     }
     request = Request(
