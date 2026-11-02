@@ -710,6 +710,50 @@
   box-shadow: 0 2px 6px rgb(198 92 39 / 10%);
 }
 
+.poi-system-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.6fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.poi-system-search,
+.poi-system-category {
+  display: grid;
+  gap: 7px;
+  color: #596579;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.poi-system-search input,
+.poi-system-category select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #e0e5ed;
+  border-radius: 9px;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-size: 13px;
+}
+
+.poi-system-search input:focus,
+.poi-system-category select:focus {
+  border-color: #e76b32;
+  outline: 3px solid rgb(231 107 50 / 15%);
+}
+
+.poi-system-count {
+  padding: 0 0 12px;
+  color: #667085;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .poi-status-filters button:focus-visible,
 .poi-tabs button:focus-visible,
 .admin-row-actions button:focus-visible {
@@ -777,6 +821,16 @@
 .poi-status-filters button:active,
 .poi-tabs button:active {
   transform: translateY(1px);
+}
+
+@media (max-width: 640px) {
+  .poi-system-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .poi-system-count {
+    padding: 0;
+  }
 }
 
 /* [TOUR-AN-008] Biểu đồ trải nghiệm tour thích ứng với chiều rộng Dashboard. */

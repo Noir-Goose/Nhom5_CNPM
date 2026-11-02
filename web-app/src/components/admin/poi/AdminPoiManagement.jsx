@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getPoiSubmissions,
   approvePoiSubmission,
@@ -52,6 +52,8 @@ function AdminPoiManagement() {
   const [status, setStatus] = useState("pending");
   const [submissions, setSubmissions] = useState([]);
   const [pois, setPois] = useState([]);
+  const [poiSearch, setPoiSearch] = useState("");
+  const [poiCategory, setPoiCategory] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   const [error, setError] = useState("");
@@ -359,7 +361,32 @@ function AdminPoiManagement() {
     setError("");
   }
 
-  const rows = activeTab === "submissions" ? submissions : pois;
+  const filteredPois = useMemo(() => {
+    const keyword = poiSearch.trim().toLocaleLowerCase();
+
+    return pois.filter((poi) => {
+      if (poiCategory && poi.categoryKey !== poiCategory) return false;
+      if (!keyword) return true;
+
+      const localizedContent = Object.values(poi.content ?? {}).flatMap(
+        (content) => [content?.name, content?.description, content?.category]
+      );
+      const searchableText = [
+        poi.name,
+        poi.address,
+        poi.description,
+        poi.categoryKey,
+        ...localizedContent,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase();
+
+      return searchableText.includes(keyword);
+    });
+  }, [pois, poiSearch, poiCategory]);
+
+  const rows = activeTab === "submissions" ? submissions : filteredPois;
 
   return (
     <section className="admin-card">
@@ -411,6 +438,39 @@ function AdminPoiManagement() {
               {label}
             </button>
           ))}
+        </div>
+      )}
+
+      {activeTab === "system" && (
+        <div className="poi-system-filters" aria-label="Tìm kiếm và lọc POI">
+          <label className="poi-system-search">
+            <span>Tìm POI</span>
+            <input
+              type="search"
+              value={poiSearch}
+              onChange={(event) => setPoiSearch(event.target.value)}
+              placeholder="Tên, địa chỉ hoặc nội dung..."
+            />
+          </label>
+
+          <label className="poi-system-category">
+            <span>Lọc theo nhóm</span>
+            <select
+              value={poiCategory}
+              onChange={(event) => setPoiCategory(event.target.value)}
+            >
+              <option value="">Tất cả nhóm</option>
+              {poiCategoryOptions.map((category) => (
+                <option key={category.key} value={category.key}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <span className="poi-system-count" aria-live="polite">
+            {filteredPois.length} / {pois.length} POI
+          </span>
         </div>
       )}
 
@@ -605,7 +665,9 @@ function AdminPoiManagement() {
             <div className="admin-empty">Đang tải dữ liệu POI...</div>
           ) : rows.length === 0 ? (
             <div className="admin-empty">
-              Không có POI trong danh sách này.
+              {activeTab === "system" && pois.length > 0
+                ? "Không tìm thấy POI phù hợp. Thử đổi từ khóa hoặc bộ lọc."
+                : "Không có POI trong danh sách này."}
             </div>
           ) : (
             <div className="admin-table-wrapper">
