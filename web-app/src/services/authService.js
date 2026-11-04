@@ -40,7 +40,7 @@ export async function login(email, password) {
 }
 
 export async function requestLoginOtp(email) {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/request-login-otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
@@ -57,6 +57,24 @@ export async function loginWithOtp(email, otp) {
   });
 
   return parseResponse(response, "Mã OTP không hợp lệ hoặc đã hết hạn.");
+}
+
+export async function requestPasswordReset(email) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/request-password-reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return parseResponse(response, "Không thể gửi mã đặt lại mật khẩu.");
+}
+
+export async function resetPassword(email, otp, newPassword) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp, new_password: newPassword }),
+  });
+  return parseResponse(response, "Không thể đặt lại mật khẩu.");
 }
 
 export async function submitPoiRequest(poiData) {

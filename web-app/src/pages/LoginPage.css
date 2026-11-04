@@ -233,6 +233,11 @@
   text-decoration: underline;
 }
 
+.password-reset-link {
+  align-self: flex-start;
+  margin-top: -12px;
+}
+
 .login-back-button {
   display: block;
   margin: 18px auto 0;

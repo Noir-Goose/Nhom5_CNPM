@@ -3,7 +3,9 @@ import { useState } from "react";
 import {
   login,
   loginWithOtp,
+  requestPasswordReset,
   requestLoginOtp,
+  resetPassword,
 } from "../services/authService";
 import "./LoginPage.css";
 
@@ -11,6 +13,8 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [view, setView] = useState("login");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -54,7 +58,7 @@ function LoginPage() {
 
     try {
       const data = await requestLoginOtp(email);
-      setView("verify");
+      setView("login-otp-verify");
       setNotice(data.message);
     } catch (err) {
       setError(err.message || "Không thể gửi mã đăng nhập. Vui lòng thử lại.");
@@ -79,12 +83,101 @@ function LoginPage() {
     }
   }
 
+  async function handleRequestPasswordReset(event) {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    setIsLoading(true);
+
+    try {
+      const data = await requestPasswordReset(email);
+      setView("password-reset-verify");
+      setNotice(data.message);
+    } catch (err) {
+      setError(err.message || "Không thể gửi mã đặt lại mật khẩu. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleResetPassword(event) {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    if (newPassword !== confirmPassword) {
+      setError("Mật khẩu xác nhận không khớp.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const data = await resetPassword(email, otp, newPassword);
+      setView("login");
+      setPassword("");
+      setOtp("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setNotice(data.message);
+    } catch (err) {
+      setError(err.message || "Không thể đặt lại mật khẩu. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   function returnToLogin() {
     setView("login");
     setOtp("");
+    setNewPassword("");
+    setConfirmPassword("");
     setError("");
     setNotice("");
   }
+
+  const submitHandlers = {
+    login: handleSubmit,
+    "login-otp-request": handleRequestOtp,
+    "login-otp-verify": handleVerifyOtp,
+    "password-reset-request": handleRequestPasswordReset,
+    "password-reset-verify": handleResetPassword,
+  };
+  const viewContent = {
+    login: {
+      eyebrow: "WELCOME BACK",
+      title: "Ch\u00e0o m\u1eebng tr\u1edf l\u1ea1i!",
+      description: "\u0110\u0103ng nh\u1eadp \u0111\u1ec3 ti\u1ebfp t\u1ee5c h\u00e0nh tr\u00ecnh c\u1ee7a b\u1ea1n.",
+      submit: "\u0110\u0103ng nh\u1eadp",
+      loading: "\u0110ang \u0111\u0103ng nh\u1eadp...",
+    },
+    "login-otp-request": {
+      eyebrow: "EMAIL SIGN-IN",
+      title: "\u0110\u0103ng nh\u1eadp b\u1eb1ng OTP",
+      description: "Nh\u1eadp email t\u00e0i kho\u1ea3n \u0111\u1ec3 nh\u1eadn m\u00e3 OTP \u0111\u0103ng nh\u1eadp.",
+      submit: "G\u1eedi m\u00e3 OTP",
+      loading: "\u0110ang g\u1eedi m\u00e3...",
+    },
+    "login-otp-verify": {
+      eyebrow: "EMAIL SIGN-IN",
+      title: "Nh\u1eadp m\u00e3 \u0111\u0103ng nh\u1eadp",
+      description: "Nh\u1eadp m\u00e3 6 ch\u1eef s\u1ed1 \u0111\u01b0\u1ee3c g\u1eedi t\u1edbi email c\u1ee7a b\u1ea1n.",
+      submit: "X\u00e1c nh\u1eadn & \u0110\u0103ng nh\u1eadp",
+      loading: "\u0110ang x\u00e1c minh...",
+    },
+    "password-reset-request": {
+      eyebrow: "PASSWORD RESET",
+      title: "\u0110\u1eb7t l\u1ea1i m\u1eadt kh\u1ea9u",
+      description: "Nh\u1eadp email t\u00e0i kho\u1ea3n \u0111\u1ec3 nh\u1eadn m\u00e3 x\u00e1c minh \u0111\u1eb7t l\u1ea1i m\u1eadt kh\u1ea9u.",
+      submit: "G\u1eedi m\u00e3 \u0111\u1eb7t l\u1ea1i",
+      loading: "\u0110ang g\u1eedi m\u00e3...",
+    },
+    "password-reset-verify": {
+      eyebrow: "PASSWORD RESET",
+      title: "T\u1ea1o m\u1eadt kh\u1ea9u m\u1edbi",
+      description: "Nh\u1eadp m\u00e3 OTP trong email v\u00e0 t\u1ea1o m\u1eadt kh\u1ea9u m\u1edbi.",
+      submit: "L\u01b0u m\u1eadt kh\u1ea9u m\u1edbi",
+      loading: "\u0110ang c\u1eadp nh\u1eadt...",
+    },
+  };
 
   return (
     <main className="login-page">
@@ -129,34 +222,14 @@ function LoginPage() {
           </div>
 
           <div className="login-heading">
-            <span className="section-eyebrow">
-              {view === "login" ? "WELCOME BACK" : "EMAIL SIGN-IN"}
-            </span>
-            <h2>
-              {view === "login"
-                ? "Chào mừng trở lại!"
-                : view === "request"
-                  ? "Khôi phục đăng nhập"
-                  : "Nhập mã đăng nhập"}
-            </h2>
-            <p>
-              {view === "login"
-                ? "Đăng nhập để tiếp tục hành trình của bạn."
-                : view === "request"
-                  ? "Nhập email tài khoản để nhận mã OTP đăng nhập."
-                  : "Nhập mã 6 chữ số được gửi tới email của bạn."}
-            </p>
+            <span className="section-eyebrow">{viewContent[view].eyebrow}</span>
+            <h2>{viewContent[view].title}</h2>
+            <p>{viewContent[view].description}</p>
           </div>
 
           <form
             className="login-form"
-            onSubmit={
-              view === "login"
-                ? handleSubmit
-                : view === "request"
-                  ? handleRequestOtp
-                  : handleVerifyOtp
-            }
+            onSubmit={submitHandlers[view]}
           >
             <div className="form-field">
               <label htmlFor="email">Địa chỉ email</label>
@@ -167,7 +240,7 @@ function LoginPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
-                readOnly={view === "verify"}
+                readOnly={view.endsWith("-verify")}
                 required
               />
             </div>
@@ -180,12 +253,12 @@ function LoginPage() {
                     className="login-inline-button"
                     type="button"
                     onClick={() => {
-                      setView("request");
+                      setView("login-otp-request");
                       setError("");
                       setNotice("");
                     }}
                   >
-                    Quên mật khẩu?
+                    {"\u0110\u0103ng nh\u1eadp b\u1eb1ng OTP"}
                   </button>
                 </div>
 
@@ -212,7 +285,22 @@ function LoginPage() {
               </div>
             )}
 
-            {view === "verify" && (
+            {view === "login" && (
+              <button
+                className="login-inline-button password-reset-link"
+                type="button"
+                onClick={() => {
+                  setView("password-reset-request");
+                  setOtp("");
+                  setError("");
+                  setNotice("");
+                }}
+              >
+                {"\u0110\u1eb7t l\u1ea1i m\u1eadt kh\u1ea9u"}
+              </button>
+            )}
+
+            {(view === "login-otp-verify" || view === "password-reset-verify") && (
               <div className="form-field">
                 <label htmlFor="login-otp">Mã OTP</label>
                 <input
@@ -228,6 +316,37 @@ function LoginPage() {
                   required
                 />
               </div>
+            )}
+
+            {view === "password-reset-verify" && (
+              <>
+                <div className="form-field">
+                  <label htmlFor="new-password">{"M\u1eadt kh\u1ea9u m\u1edbi"}</label>
+                  <input
+                    id="new-password"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={12}
+                    maxLength={128}
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="confirm-password">{"X\u00e1c nh\u1eadn m\u1eadt kh\u1ea9u m\u1edbi"}</label>
+                  <input
+                    id="confirm-password"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={12}
+                    maxLength={128}
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    required
+                  />
+                </div>
+              </>
             )}
 
             {notice && (
@@ -248,19 +367,7 @@ function LoginPage() {
               type="submit"
               disabled={isLoading}
             >
-              <span>
-                {isLoading
-                  ? view === "login"
-                    ? "Đang đăng nhập..."
-                    : view === "request"
-                      ? "Đang gửi mã..."
-                      : "Đang xác minh..."
-                  : view === "login"
-                    ? "Đăng nhập"
-                    : view === "request"
-                      ? "Gửi mã OTP"
-                      : "Xác nhận & đăng nhập"}
-              </span>
+<span>{isLoading ? viewContent[view].loading : viewContent[view].submit}</span>
               {!isLoading && <span aria-hidden="true">→</span>}
             </button>
           </form>

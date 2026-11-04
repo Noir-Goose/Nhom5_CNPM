@@ -62,6 +62,16 @@ class VerifyLoginOtpRequest(BaseModel):
     email: EmailStr
     otp: OtpCode
 
+
+class RequestPasswordReset(BaseModel):
+    email: EmailStr
+
+
+class CompletePasswordReset(BaseModel):
+    email: EmailStr
+    otp: OtpCode
+    new_password: Password
+
 class LoginRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 

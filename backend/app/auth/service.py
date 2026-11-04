@@ -12,7 +12,9 @@ from pymongo.errors import DuplicateKeyError
 
 from app.auth.email_service import send_otp_email
 from app.auth.schemas import (
+    CompletePasswordReset,
     OwnerRegistrationRequest,
+    RequestPasswordReset,
     VerifyLoginOtpRequest,
     VerifyOtpRequest,
 )
@@ -305,6 +307,102 @@ def _can_use_email_login_otp(user: dict | None) -> bool:
     if role == "poi_owner":
         return user.get("isActive", True) is not False and user.get("approvalStatus") == "approved"
     return True
+
+
+def _can_reset_password(user: dict | None) -> bool:
+    return bool(
+        user
+        and user.get("emailVerified", False)
+        and user.get("role") in {"admin", "poi_owner"}
+    )
+
+
+def start_password_reset(
+    database: Database,
+    request: RequestPasswordReset,
+) -> dict[str, str]:
+    """Send a password-reset OTP without revealing whether an email exists."""
+    email = str(request.email).strip().lower()
+    verifications = database["password_reset_verifications"]
+    verifications.create_index([("email", ASCENDING)], unique=True)
+    generic_message = (
+        "Nếu email thuộc tài khoản đã xác minh, mã đặt lại mật khẩu sẽ được gửi.")
+
+    user = database["users"].find_one({"email": email})
+    if not _can_reset_password(user):
+        return {"message": generic_message}
+
+    now = datetime.now(UTC)
+    existing = verifications.find_one({"email": email}, {"lastSentAt": 1})
+    last_sent = _ensure_utc(existing.get("lastSentAt")) if existing else None
+    if last_sent and (now - last_sent).total_seconds() < OTP_RESEND_COOLDOWN_SECONDS:
+        return {"message": generic_message}
+
+    otp = f"{secrets.randbelow(1_000_000):06d}"
+    record = {
+        "email": email,
+        "otpHash": _hash_otp(email, otp),
+        "createdAt": now,
+        "lastSentAt": now,
+        "expiresAt": now + timedelta(minutes=OTP_TTL_MINUTES),
+        "attempts": 0,
+    }
+    verifications.replace_one({"email": email}, record, upsert=True)
+
+    try:
+        send_otp_email(email, otp, purpose="password_reset")
+    except Exception as error:
+        diagnostic = str(error) if isinstance(error, RuntimeError) else type(error).__name__
+        logger.error("Password reset OTP email failed: %s", diagnostic)
+        verifications.delete_one({"email": email, "otpHash": record["otpHash"]})
+        raise RuntimeError("Could not send password reset code") from error
+
+    return {"message": generic_message}
+
+
+def complete_password_reset(
+    database: Database,
+    request: CompletePasswordReset,
+) -> dict[str, str]:
+    """Validate a reset OTP and replace the account password."""
+    email = str(request.email).strip().lower()
+    verifications = database["password_reset_verifications"]
+    record = verifications.find_one({"email": email})
+    if not record:
+        raise ValueError("Mã OTP không hợp lệ hoặc đã hết hạn")
+
+    now = datetime.now(UTC)
+    expires_at = _ensure_utc(record.get("expiresAt"))
+    if expires_at is None or expires_at <= now:
+        verifications.delete_one({"_id": record["_id"]})
+        raise ValueError("Mã OTP không hợp lệ hoặc đã hết hạn")
+
+    if record.get("attempts", 0) >= OTP_MAX_ATTEMPTS:
+        verifications.delete_one({"_id": record["_id"]})
+        raise ValueError("Bạn đã nhập sai quá số lần cho phép. Hãy yêu cầu mã mới")
+
+    submitted_hash = _hash_otp(email, request.otp)
+    if not hmac.compare_digest(record["otpHash"], submitted_hash):
+        verifications.update_one({"_id": record["_id"]}, {"$inc": {"attempts": 1}})
+        raise ValueError("Mã OTP không hợp lệ hoặc đã hết hạn")
+
+    user = database["users"].find_one({"email": email})
+    if not _can_reset_password(user):
+        verifications.delete_one({"_id": record["_id"]})
+        raise ValueError("Không thể đặt lại mật khẩu cho tài khoản này")
+
+    database["users"].update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "passwordHash": hash_password(request.new_password),
+                "updatedAt": now,
+            }
+        },
+    )
+    verifications.delete_one({"_id": record["_id"]})
+    database["login_otp_verifications"].delete_one({"email": email})
+    return {"message": "Mật khẩu đã được đặt lại. Bạn có thể đăng nhập bằng mật khẩu mới."}
 
 
 def start_login_otp(database: Database, email: str) -> dict[str, str]:

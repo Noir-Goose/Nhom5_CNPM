@@ -28,6 +28,13 @@ def send_otp_email(recipient: str, otp: str, purpose: str = "registration") -> N
             "This code lets you sign in to your account. Do not share it with anyone.\n"
             "If you did not request this code, you can ignore this email."
         )
+    elif purpose == "password_reset":
+        subject = "Reset your POI Owner password"
+        text_content = (
+            f"Your password reset code is: {otp}\n\n"
+            "This code expires in 10 minutes. Do not share it with anyone.\n"
+            "If you did not request a password reset, you can ignore this email."
+        )
     else:
         subject = "Verify your POI Owner account"
         text_content = (

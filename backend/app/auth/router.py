@@ -4,16 +4,20 @@ from pymongo.errors import PyMongoError
 from app.audit.service import record_audit_event
 from app.auth.security import create_access_token, verify_password
 from app.auth.schemas import (
+    CompletePasswordReset,
     LoginRequest,
     ForgotPasswordRequest,
     OwnerRegistrationRequest,
+    RequestPasswordReset,
     ResendOtpRequest,
     VerifyLoginOtpRequest,
     VerifyOtpRequest,
 )
 from app.auth.service import (
+    complete_password_reset,
     resend_registration_otp,
     start_login_otp,
+    start_password_reset,
     start_registration,
     verify_login_otp,
     verify_registration,
@@ -196,9 +200,10 @@ def login(payload: LoginRequest, request: Request):
     }
 
 
-@router.post("/forgot-password")
+@router.post("/forgot-password", include_in_schema=False)
+@router.post("/request-login-otp")
 def request_sign_in_otp(payload: ForgotPasswordRequest, request: Request):
-    """Request a password recovery/sign-in OTP by email."""
+    """Request an email OTP for signing in without a password."""
     database = get_database(request)
     try:
         return start_login_otp(database, str(payload.email))
@@ -216,7 +221,7 @@ def request_sign_in_otp(payload: ForgotPasswordRequest, request: Request):
 
 @router.post("/verify-login-otp")
 def login_with_otp(payload: VerifyLoginOtpRequest, request: Request):
-    """Complete password recovery by signing in with the emailed OTP."""
+    """Sign in after validating the emailed OTP."""
     database = get_database(request)
     try:
         user = verify_login_otp(database, payload)
@@ -253,3 +258,37 @@ def login_with_otp(payload: VerifyLoginOtpRequest, request: Request):
             "role": role,
         },
     }
+
+
+@router.post("/request-password-reset")
+def request_password_reset(payload: RequestPasswordReset, request: Request):
+    database = get_database(request)
+    try:
+        return start_password_reset(database, payload)
+    except RuntimeError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not send password reset code",
+        ) from error
+    except PyMongoError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not process password reset request",
+        ) from error
+
+
+@router.post("/reset-password")
+def reset_password(payload: CompletePasswordReset, request: Request):
+    database = get_database(request)
+    try:
+        return complete_password_reset(database, payload)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
+    except PyMongoError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not reset password",
+        ) from error
