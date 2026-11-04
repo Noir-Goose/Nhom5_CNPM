@@ -53,6 +53,7 @@ class AdminPoiUpdateRequest(BaseModel):
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
     content: dict[str, Any] = Field(default_factory=dict)
+    isActive: bool | None = None
 
     @field_validator("name", "categoryKey", "address", "description")
     @classmethod
@@ -390,12 +391,25 @@ def update_system_poi(
     database = get_database(request)
 
     try:
-        previous = database["pois"].find_one({"id": poi_id}, {"name": 1, "categoryKey": 1, "address": 1, "latitude": 1, "longitude": 1})
+        payload_data = payload.model_dump(exclude_unset=True)
+        previous = database["pois"].find_one(
+            {"id": poi_id},
+            {
+                "name": 1,
+                "categoryKey": 1,
+                "address": 1,
+                "latitude": 1,
+                "longitude": 1,
+                "isActive": 1,
+                "ownerId": 1,
+                "submissionId": 1,
+            },
+        )
         result = database["pois"].update_one(
             {"id": poi_id},
             {
                 "$set": {
-                    **payload.model_dump(),
+                    **payload_data,
                     "updatedAt": datetime.now(UTC),
                 }
             },
@@ -408,14 +422,47 @@ def update_system_poi(
             )
 
         changes = {
-            key: {"before": previous.get(key) if previous else None, "after": payload.model_dump().get(key)}
-            for key in ("name", "categoryKey", "address", "latitude", "longitude")
+            key: {
+                "before": (
+                    previous.get(key, True) if key == "isActive" else previous.get(key)
+                ) if previous else None,
+                "after": payload_data.get(key),
+            }
+            for key in (
+                "name",
+                "categoryKey",
+                "address",
+                "latitude",
+                "longitude",
+                "isActive",
+            )
         }
         record_audit_event(
             database, actor=admin, action="poi.update", resource_type="poi",
             resource_id=poi_id, outcome="success", summary="Admin edited a POI",
             changes=changes,
         )
+
+        if (
+            previous
+            and payload.isActive is not None
+            and previous.get("isActive", True) is not payload.isActive
+        ):
+            owner_id = previous.get("ownerId")
+            if owner_id and ObjectId.is_valid(str(owner_id)):
+                notify_owner_safely(
+                    database,
+                    owner_id=str(owner_id),
+                    event_type="poi_activated" if payload.isActive else "poi_deactivated",
+                    title="POI visibility updated",
+                    message=(
+                        "Your POI is now visible on the map."
+                        if payload.isActive
+                        else "Your POI is no longer visible on the map."
+                    ),
+                    poi_id=poi_id,
+                    submission_id=previous.get("submissionId"),
+                )
 
         return {"message": "POI updated", "poiId": poi_id}
 

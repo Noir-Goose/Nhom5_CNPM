@@ -437,6 +437,11 @@
   color: #b42318;
 }
 
+.admin-status.inactive {
+  background: #ffebeb;
+  color: #b42318;
+}
+
 .admin-row-actions {
   display: flex;
   flex-wrap: wrap;

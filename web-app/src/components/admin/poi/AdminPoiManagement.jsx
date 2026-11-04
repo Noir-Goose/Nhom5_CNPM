@@ -43,6 +43,7 @@ const createEditForm = (poi) => {
       poi.description ?? poi.content?.vi?.description ?? "",
     latitude: String(poi.latitude ?? ""),
     longitude: String(poi.longitude ?? ""),
+    isActive: poi.isActive !== false,
     content,
   };
 };
@@ -331,6 +332,7 @@ function AdminPoiManagement() {
       description: editForm.description.trim(),
       latitude,
       longitude,
+      isActive: editForm.isActive,
       content: normalizedContent,
     };
 
@@ -570,8 +572,23 @@ function AdminPoiManagement() {
                   required
                 />
               </label>
-                
-                
+
+              <label>
+                Trạng thái POI
+                <select
+                  name="isActive"
+                  value={editForm.isActive ? "active" : "inactive"}
+                  onChange={(event) =>
+                    setEditForm((current) => ({
+                      ...current,
+                      isActive: event.target.value === "active",
+                    }))
+                  }
+                >
+                  <option value="active">Đang hoạt động</option>
+                  <option value="inactive">Đã ẩn</option>
+                </select>
+              </label>
             </div>
 
             <div className="poi-language-editor">
@@ -676,7 +693,7 @@ function AdminPoiManagement() {
                   <tr>
                     <th>Tên POI</th>
                     <th>Địa chỉ</th>
-                    {activeTab === "submissions" && <th>Trạng thái</th>}
+                    <th>Trạng thái</th>
                     <th>Thao tác</th>
                   </tr>
                 </thead>
@@ -702,7 +719,7 @@ function AdminPoiManagement() {
                         <td><strong>{name}</strong></td>
                         <td>{address}</td>
 
-                        {activeTab === "submissions" && (
+                        {activeTab === "submissions" ? (
                           <td>
                             {({
                               pending: "Chờ duyệt",
@@ -710,6 +727,16 @@ function AdminPoiManagement() {
                               rejected: "Bị từ chối",
                               revision_requested: "Yêu cầu sửa",
                             })[item.status] ?? item.status ?? "—"}
+                          </td>
+                        ) : (
+                          <td>
+                            <span
+                              className={`admin-status ${
+                                item.isActive === false ? "inactive" : "approved"
+                              }`}
+                            >
+                              {item.isActive === false ? "Đã ẩn" : "Đang hoạt động"}
+                            </span>
                           </td>
                         )}
 
