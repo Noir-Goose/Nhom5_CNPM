@@ -76,3 +76,67 @@ def send_otp_email(recipient: str, otp: str, purpose: str = "registration") -> N
         raise RuntimeError(
             f"Brevo email API connection failed ({type(reason).__name__})"
         ) from error
+
+
+def send_owner_registration_decision(
+    recipient: str,
+    full_name: str,
+    account_name: str,
+    decision: str,
+    rejection_reason: str | None = None,
+) -> None:
+    """Email an applicant the Admin decision on their registration."""
+    api_key = os.getenv("BREVO_API_KEY", "").strip()
+    sender_email = os.getenv("BREVO_SENDER_EMAIL", "").strip()
+    sender_name = os.getenv("BREVO_SENDER_NAME", "FoodTour").strip()
+    if not all([api_key, sender_email, sender_name]):
+        raise RuntimeError("Brevo API settings are incomplete")
+
+    approved = decision == "approved"
+    subject = (
+        "Your POI Owner account has been approved"
+        if approved
+        else "Your POI Owner registration was declined"
+    )
+    greeting = f"Hello {full_name or account_name},"
+    if approved:
+        decision_text = (
+            f"Your POI Owner account ({account_name}) has been approved. "
+            "You can now sign in and use the owner features."
+        )
+    else:
+        decision_text = (
+            f"Your POI Owner registration ({account_name}) was declined."
+        )
+        if rejection_reason:
+            decision_text += f"\nReason: {rejection_reason}"
+    payload = {
+        "sender": {"name": sender_name, "email": sender_email},
+        "to": [{"email": recipient}],
+        "subject": subject,
+        "textContent": f"{greeting}\n\n{decision_text}",
+    }
+    request = Request(
+        BREVO_EMAIL_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=20) as response:
+            if response.status != 201:
+                raise RuntimeError(
+                    f"Brevo email API returned unexpected HTTP {response.status}"
+                )
+    except HTTPError as error:
+        raise RuntimeError(
+            f"Brevo email API rejected the request (HTTP {error.code})"
+        ) from error
+    except URLError as error:
+        raise RuntimeError(
+            f"Brevo email API connection failed ({type(error.reason).__name__})"
+        ) from error

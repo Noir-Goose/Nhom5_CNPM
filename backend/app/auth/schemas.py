@@ -72,6 +72,13 @@ class CompletePasswordReset(BaseModel):
     otp: OtpCode
     new_password: Password
 
+
+class RejectOwnerRegistrationRequest(BaseModel):
+    reason: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=3, max_length=1000),
+    ]
+
 class LoginRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 

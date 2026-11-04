@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime
 from typing import Any
 
@@ -7,12 +8,16 @@ from pymongo.database import Database
 from pymongo.errors import PyMongoError
 
 from app.auth.admin_dependencies import get_current_admin
+from app.auth.email_service import send_owner_registration_decision
+from app.auth.schemas import RejectOwnerRegistrationRequest
 from app.audit.service import record_audit_event
+from app.notifications.service import create_owner_notification
 
 router = APIRouter(
     prefix="/api/v1/admin",
     tags=["Admin"],
 )
+logger = logging.getLogger(__name__)
 
 
 def get_database_from_request(request: Request) -> Database:
@@ -39,7 +44,7 @@ def list_poi_owner_registrations(
     status_filter: str = Query(
         default="pending",
         alias="status",
-        pattern="^(pending|rejected)$",
+        pattern="^(pending|approved|rejected)$",
     ),
     admin: dict[str, Any] = Depends(get_current_admin),
 ):
@@ -58,8 +63,10 @@ def list_poi_owner_registrations(
                 {
                     "_id": 1,
                     "fullName": 1,
+                    "accountName": 1,
                     "email": 1,
                     "approvalStatus": 1,
+                    "approvalRejectionReason": 1,
                     "createdAt": 1,
                 },
             )
@@ -70,7 +77,9 @@ def list_poi_owner_registrations(
             {
                 "id": str(user["_id"]),
                 "fullName": user.get("fullName", ""),
+                "accountName": user.get("accountName", ""),
                 "email": user.get("email", ""),
+                "rejectionReason": user.get("approvalRejectionReason", ""),
                 "approvalStatus": user.get(
                     "approvalStatus",
                     status_filter,
@@ -95,6 +104,7 @@ def update_registration_status(
     user_id: str,
     new_status: str,
     admin: dict[str, Any],
+    rejection_reason: str | None = None,
 ) -> dict[str, str]:
     """Update a POI Owner registration status."""
     if not ObjectId.is_valid(user_id):
@@ -118,7 +128,7 @@ def update_registration_status(
 
         user = database["users"].find_one(
             user_filter,
-            {"approvalStatus": 1},
+            {"approvalStatus": 1, "fullName": 1, "accountName": 1, "email": 1},
         )
 
         if user is None:
@@ -154,20 +164,60 @@ def update_registration_status(
                 ),
             )
 
+        update_fields: dict[str, Any] = {
+            "approvalStatus": new_status,
+            "updatedAt": datetime.now(UTC),
+        }
+        if new_status == "rejected":
+            update_fields["approvalRejectionReason"] = rejection_reason
+        else:
+            update_fields["approvalRejectionReason"] = None
+
         result = database["users"].update_one(
             {
                 **user_filter,
                 "approvalStatus": current_status,
             },
             {
-                "$set": {
-                    "approvalStatus": new_status,
-                    "updatedAt": datetime.now(UTC),
-                },
+                "$set": update_fields,
             },
         )
 
         if result.modified_count == 1:
+            try:
+                send_owner_registration_decision(
+                    user.get("email", ""),
+                    user.get("fullName", ""),
+                    user.get("accountName", ""),
+                    new_status,
+                    rejection_reason,
+                )
+            except Exception as error:
+                logger.warning(
+                    "Could not email POI Owner registration decision (%s)",
+                    type(error).__name__,
+                )
+            try:
+                create_owner_notification(
+                    database,
+                    owner_id=user["_id"],
+                    event_type=f"owner_registration_{new_status}",
+                    title=(
+                        "POI Owner registration approved"
+                        if new_status == "approved"
+                        else "POI Owner registration declined"
+                    ),
+                    message=(
+                        "Your POI Owner registration has been approved."
+                        if new_status == "approved"
+                        else f"Your POI Owner registration was declined. Reason: {rejection_reason}"
+                    ),
+                )
+            except Exception as error:
+                logger.warning(
+                    "Could not create POI Owner registration notification (%s)",
+                    type(error).__name__,
+                )
             record_audit_event(
                 database, actor=admin,
                 action=f"poi_owner_registration.{'approve' if new_status == 'approved' else 'reject'}",
@@ -230,6 +280,7 @@ def approve_poi_owner_registration(
 def reject_poi_owner_registration(
     user_id: str,
     request: Request,
+    payload: RejectOwnerRegistrationRequest,
     admin: dict[str, Any] = Depends(get_current_admin),
 ):
     """Reject a POI Owner account without deleting it."""
@@ -240,6 +291,7 @@ def reject_poi_owner_registration(
         user_id,
         "rejected",
         admin,
+        payload.reason,
     )
 
 @router.delete("/poi-owner-registrations/{user_id}")

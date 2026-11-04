@@ -4,7 +4,7 @@ const API_BASE_URL =
 // Lấy danh sách POI Owner theo trạng thái.
 // Mặc định lấy danh sách đang chờ duyệt.
 export async function getPoiOwnerRegistrations(status = "pending") {
-  const allowedStatuses = ["pending", "rejected"];
+  const allowedStatuses = ["pending", "approved", "rejected"];
 
   if (!allowedStatuses.includes(status)) {
     throw new Error("Trạng thái đăng ký không hợp lệ.");
@@ -26,10 +26,14 @@ export async function approvePoiOwnerRegistration(userId) {
 }
 
 // Từ chối đăng ký POI Owner.
-export async function rejectPoiOwnerRegistration(userId) {
+export async function rejectPoiOwnerRegistration(userId, reason) {
   return adminRequest(
     `/api/v1/admin/poi-owner-registrations/${encodeURIComponent(userId)}/reject`,
-    { method: "PATCH" },
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    },
   );
 }
 

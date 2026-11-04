@@ -402,6 +402,14 @@
   font-size: 13px;
 }
 
+.registration-rejection-reason {
+  display: block;
+  margin-top: 6px;
+  color: #a33c32;
+  white-space: normal;
+  max-width: 320px;
+}
+
 .admin-table th {
   background: #f8f9fc;
   color: #667085;

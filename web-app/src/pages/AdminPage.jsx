@@ -115,6 +115,19 @@ function AdminPage() {
   async function handleAction(userId, action) {
     const actionLabel = action === "approve" ? "duyệt" : "từ chối";
 
+    let rejectionReason = "";
+    if (action === "reject") {
+      rejectionReason = window.prompt(
+        "Nhập lý do từ chối đăng ký (bắt buộc, ít nhất 3 ký tự):",
+      )?.trim() || "";
+      if (rejectionReason.length < 3) {
+        if (rejectionReason) {
+          setError("Lý do từ chối phải có ít nhất 3 ký tự.");
+        }
+        return;
+      }
+    }
+
     if (!window.confirm(`Bạn có chắc muốn ${actionLabel} đăng ký này?`)) {
       return;
     }
@@ -128,7 +141,7 @@ function AdminPage() {
         await approvePoiOwnerRegistration(userId);
         setMessage("Đã duyệt đăng ký POI Owner.");
       } else {
-        await rejectPoiOwnerRegistration(userId);
+        await rejectPoiOwnerRegistration(userId, rejectionReason);
         setMessage("Đã từ chối đăng ký POI Owner.");
       }
 
@@ -331,6 +344,7 @@ function AdminPage() {
                       <thead>
                         <tr>
                           <th>Họ và tên</th>
+                          <th>Account name</th>
                           <th>Email</th>
                           <th>Ngày đăng ký</th>
                           <th>Trạng thái</th>
@@ -345,8 +359,14 @@ function AdminPage() {
                               <strong>
                                 {registration.fullName || "Chưa cập nhật"}
                               </strong>
+                              {registration.rejectionReason && (
+                                <small className="registration-rejection-reason">
+                                  Lý do: {registration.rejectionReason}
+                                </small>
+                              )}
                             </td>
 
+                            <td>{registration.accountName || "—"}</td>
                             <td>{registration.email || "—"}</td>
 
                             <td>
