@@ -184,12 +184,16 @@ function MapApp() {
     if (!isPoiDetailsOpen || selectedPoi?.id == null) return undefined;
 
     let isActive = true;
-    setIsLoadingPoiDetails(true);
-    setPoiDetailsError("");
 
-    getPoiById(selectedPoi.id)
+    Promise.resolve()
+      .then(() => {
+        if (!isActive) return null;
+        setIsLoadingPoiDetails(true);
+        setPoiDetailsError("");
+        return getPoiById(selectedPoi.id);
+      })
       .then((poiDetails) => {
-        if (isActive) setSelectedPoi(poiDetails);
+        if (isActive && poiDetails) setSelectedPoi(poiDetails);
       })
       .catch((error) => {
         if (isActive) {
