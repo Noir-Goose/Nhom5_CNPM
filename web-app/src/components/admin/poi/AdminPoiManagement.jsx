@@ -6,6 +6,7 @@ import {
   getSystemPois,
   updateSystemPoi,
   deleteSystemPoi,
+  restoreSystemPoi,
   requestPoiRevision,
 } from "../../../services/adminPoiService";
 import "../../../pages/AdminPage.css";
@@ -56,6 +57,7 @@ function AdminPoiManagement() {
   const [pois, setPois] = useState([]);
   const [poiSearch, setPoiSearch] = useState("");
   const [poiCategory, setPoiCategory] = useState("");
+  const [poiStatus, setPoiStatus] = useState("active");
   const [isLoading, setIsLoading] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   const [error, setError] = useState("");
@@ -224,7 +226,7 @@ function AdminPoiManagement() {
     }
 
     const name = item.name ?? item.content?.vi?.name ?? "POI này";
-    if (!window.confirm(`Xóa "${name}" khỏi hệ thống? Thao tác này không thể hoàn tác.`)) {
+    if (!window.confirm(`Ẩn "${name}" khỏi bản đồ? Dữ liệu vẫn được giữ lại để có thể khôi phục.`)) {
       return;
     }
 
@@ -234,10 +236,38 @@ function AdminPoiManagement() {
 
     try {
       await deleteSystemPoi(id);
-      setMessage("Đã xóa POI.");
+      setMessage("Đã ẩn POI. Dữ liệu vẫn được giữ lại.");
       await loadData();
     } catch (err) {
       setError(err.message || "Không thể xóa POI.");
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  async function handleRestore(item) {
+    const id = item._id ?? item.id ?? item.poiId;
+
+    if (!id) {
+      setError("Không tìm thấy mã POI.");
+      return;
+    }
+
+    const name = item.name ?? item.content?.vi?.name ?? "POI này";
+    if (!window.confirm(`Khôi phục "${name}" và hiển thị lại trên bản đồ?`)) {
+      return;
+    }
+
+    setProcessingId(id);
+    setError("");
+    setMessage("");
+
+    try {
+      await restoreSystemPoi(id);
+      setMessage("Đã khôi phục POI.");
+      await loadData();
+    } catch (err) {
+      setError(err.message || "Không thể khôi phục POI.");
     } finally {
       setProcessingId(null);
     }
@@ -396,6 +426,8 @@ function AdminPoiManagement() {
     const keyword = poiSearch.trim().toLocaleLowerCase();
 
     return pois.filter((poi) => {
+      if (poiStatus === "deleted" && poi.isDeleted !== true) return false;
+      if (poiStatus === "active" && poi.isDeleted === true) return false;
       if (poiCategory && poi.categoryKey !== poiCategory) return false;
       if (!keyword) return true;
 
@@ -415,7 +447,7 @@ function AdminPoiManagement() {
 
       return searchableText.includes(keyword);
     });
-  }, [pois, poiSearch, poiCategory]);
+  }, [pois, poiSearch, poiCategory, poiStatus]);
 
   const rows = activeTab === "submissions" ? submissions : filteredPois;
 
@@ -496,6 +528,15 @@ function AdminPoiManagement() {
                   {category.label}
                 </option>
               ))}
+            </select>
+          </label>
+
+          <label className="poi-system-category">
+            <span>Trạng thái</span>
+            <select value={poiStatus} onChange={(event) => setPoiStatus(event.target.value)}>
+              <option value="active">Đang hiển thị</option>
+              <option value="deleted">Đã xóa</option>
+              <option value="all">Tất cả</option>
             </select>
           </label>
 
@@ -761,10 +802,18 @@ function AdminPoiManagement() {
                           <td>
                             <span
                               className={`admin-status ${
-                                item.isActive === false ? "inactive" : "approved"
+                                item.isDeleted === true
+                                  ? "locked"
+                                  : item.isActive === false
+                                    ? "inactive"
+                                    : "approved"
                               }`}
                             >
-                              {item.isActive === false ? "Đã ẩn" : "Đang hoạt động"}
+                              {item.isDeleted === true
+                                ? "Đã xóa"
+                                : item.isActive === false
+                                  ? "Đã ẩn"
+                                  : "Đang hoạt động"}
                             </span>
                           </td>
                         )}
@@ -807,23 +856,36 @@ function AdminPoiManagement() {
                                   Chỉnh sửa
                                 </button>
 
-                                <button
-                                  type="button"
-                                  className="admin-reject"
-                                  disabled={processingId !== null}
-                                  onClick={() => handleRequestRevision(item)}
-                                >
-                                  Yêu cầu sửa
-                                </button>
+                                {item.isDeleted === true ? (
+                                  <button
+                                    type="button"
+                                    className="admin-approve"
+                                    disabled={processingId !== null}
+                                    onClick={() => handleRestore(item)}
+                                  >
+                                    Khôi phục
+                                  </button>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="admin-reject"
+                                      disabled={processingId !== null}
+                                      onClick={() => handleRequestRevision(item)}
+                                    >
+                                      Yêu cầu sửa
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  className="admin-reject"
-                                  disabled={processingId !== null}
-                                  onClick={() => handleDelete(item)}
-                                >
-                                  Xóa
-                                </button>
+                                    <button
+                                      type="button"
+                                      className="admin-reject"
+                                      disabled={processingId !== null}
+                                      onClick={() => handleDelete(item)}
+                                    >
+                                      Xóa
+                                    </button>
+                                  </>
+                                )}
                               </>
                             )}
                           </div>

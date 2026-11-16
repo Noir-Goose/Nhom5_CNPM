@@ -96,6 +96,14 @@ export function deleteSystemPoi(poiId) {
   );
 }
 
+// Admin khôi phục POI đã bị ẩn bằng xóa mềm.
+export function restoreSystemPoi(poiId) {
+  return adminPoiRequest(
+    `/api/v1/admin/pois/${encodeURIComponent(poiId)}/restore`,
+    { method: "PATCH" },
+  );
+}
+
 // Admin yêu cầu POI Owner chỉnh sửa.
 export function requestPoiRevision(poiId, message) {
   return adminPoiRequest(

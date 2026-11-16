@@ -481,7 +481,7 @@ def delete_system_poi(
     request: Request,
     admin: dict[str, Any] = Depends(get_current_admin),
 ):
-    """UC11: Admin xóa POI khỏi danh sách POI trên hệ thống."""
+    """UC11: Soft-delete POI while preserving references and history."""
     database = get_database(request)
 
     try:
@@ -494,11 +494,20 @@ def delete_system_poi(
                 detail="POI not found",
             )
 
-        result = pois.delete_one({"id": poi_id})
-        if result.deleted_count != 1:
+        result = pois.update_one(
+            {"id": poi_id},
+            {
+                "$set": {
+                    "isDeleted": True,
+                    "isActive": False,
+                    "updatedAt": datetime.now(UTC),
+                }
+            },
+        )
+        if result.matched_count != 1:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="POI could not be deleted. Refresh and retry.",
+                detail="POI could not be hidden. Refresh and retry.",
             )
 
         record_audit_event(
@@ -508,10 +517,10 @@ def delete_system_poi(
             resource_type="poi",
             resource_id=poi_id,
             outcome="success",
-            summary="Admin deleted a POI",
+            summary="Admin soft-deleted a POI",
             changes={
-                "name": {"before": previous.get("name"), "after": None},
-                "address": {"before": previous.get("address"), "after": None},
+                "isDeleted": {"before": previous.get("isDeleted", False), "after": True},
+                "isActive": {"before": previous.get("isActive", True), "after": False},
             },
         )
 
@@ -521,19 +530,72 @@ def delete_system_poi(
                 database,
                 owner_id=str(owner_id),
                 event_type="poi_deleted",
-                title="POI đã bị xóa",
-                message="POI của bạn đã được Admin xóa khỏi hệ thống.",
+                title="POI đã bị ẩn",
+                message="POI của bạn đã được Admin ẩn khỏi bản đồ và có thể được khôi phục.",
                 poi_id=poi_id,
                 submission_id=previous.get("submissionId"),
             )
 
-        return {"message": "POI deleted", "poiId": poi_id}
+        return {"message": "POI hidden", "poiId": poi_id, "isDeleted": True}
     except HTTPException:
         raise
     except PyMongoError as error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Could not delete POI",
+        ) from error
+
+
+@router.patch("/pois/{poi_id}/restore")
+def restore_system_poi(
+    poi_id: str,
+    request: Request,
+    admin: dict[str, Any] = Depends(get_current_admin),
+):
+    """UC11: Restore a soft-deleted POI and show it on the map again."""
+    database = get_database(request)
+
+    try:
+        pois = database["pois"]
+        previous = pois.find_one({"id": poi_id})
+        if previous is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="POI not found")
+        if previous.get("isDeleted") is not True:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="POI is not deleted")
+
+        result = pois.update_one(
+            {"id": poi_id, "isDeleted": True},
+            {
+                "$set": {
+                    "isDeleted": False,
+                    "isActive": True,
+                    "updatedAt": datetime.now(UTC),
+                }
+            },
+        )
+        if result.modified_count != 1:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="POI state changed. Refresh and retry.")
+
+        record_audit_event(
+            database,
+            actor=admin,
+            action="poi.restore",
+            resource_type="poi",
+            resource_id=poi_id,
+            outcome="success",
+            summary="Admin restored a POI",
+            changes={
+                "isDeleted": {"before": True, "after": False},
+                "isActive": {"before": previous.get("isActive", False), "after": True},
+            },
+        )
+        return {"message": "POI restored", "poiId": poi_id, "isDeleted": False}
+    except HTTPException:
+        raise
+    except PyMongoError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not restore POI",
         ) from error
 
 

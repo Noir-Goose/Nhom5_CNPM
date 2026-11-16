@@ -168,7 +168,10 @@ def load_all_pois(lang: str = Query(default="vi", min_length=2, max_length=5)):
 
     try:
         documents = database["pois"].find(
-            {"isActive": {"$ne": False}},
+            {
+                "isActive": {"$ne": False},
+                "isDeleted": {"$ne": True},
+            },
             {"_id": 0},
         )
         pois = list(documents)
@@ -188,7 +191,11 @@ def get_poi(poi_id: str):
 
     try:
         document = database["pois"].find_one(
-            {"id": poi_id, "isActive": {"$ne": False}},
+            {
+                "id": poi_id,
+                "isActive": {"$ne": False},
+                "isDeleted": {"$ne": True},
+            },
             {"_id": 0},
         )
     except PyMongoError as error:

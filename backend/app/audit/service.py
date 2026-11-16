@@ -21,7 +21,7 @@ def record_audit_event(
     allowed_actions = {
         "auth.login", "admin.access_denied", "user.create", "user.update", "user.status_change",
         "user.delete", "poi_submission.approve", "poi_submission.reject",
-        "poi_submission.request_revision", "poi.update", "poi.delete",
+        "poi_submission.request_revision", "poi.update", "poi.delete", "poi.restore",
         "poi_owner_registration.approve", "poi_owner_registration.reject",
         "poi_owner_registration.delete",
     }
@@ -31,7 +31,7 @@ def record_audit_event(
 
     safe_changes: dict[str, dict[str, Any]] = {}
     for field, values in (changes or {}).items():
-        if field not in {"fullName", "email", "role", "isActive", "approvalStatus", "status", "name", "categoryKey", "address", "latitude", "longitude"}:
+        if field not in {"fullName", "email", "role", "isActive", "isDeleted", "approvalStatus", "status", "name", "categoryKey", "address", "latitude", "longitude"}:
             continue
         if not isinstance(values, dict) or set(values) - {"before", "after"}:
             continue
