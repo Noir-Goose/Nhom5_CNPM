@@ -21,7 +21,7 @@ def record_audit_event(
     allowed_actions = {
         "auth.login", "admin.access_denied", "user.create", "user.update", "user.status_change",
         "user.delete", "poi_submission.approve", "poi_submission.reject",
-        "poi_submission.request_revision", "poi.update",
+        "poi_submission.request_revision", "poi.update", "poi.delete",
         "poi_owner_registration.approve", "poi_owner_registration.reject",
         "poi_owner_registration.delete",
     }

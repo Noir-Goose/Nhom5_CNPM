@@ -88,6 +88,14 @@ export function updateSystemPoi(poiId, poiData) {
   );
 }
 
+// Admin xóa POI đang có trên hệ thống.
+export function deleteSystemPoi(poiId) {
+  return adminPoiRequest(
+    `/api/v1/admin/pois/${encodeURIComponent(poiId)}`,
+    { method: "DELETE" },
+  );
+}
+
 // Admin yêu cầu POI Owner chỉnh sửa.
 export function requestPoiRevision(poiId, message) {
   return adminPoiRequest(

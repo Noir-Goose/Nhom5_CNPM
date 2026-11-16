@@ -475,6 +475,68 @@ def update_system_poi(
         ) from error
 
 
+@router.delete("/pois/{poi_id}")
+def delete_system_poi(
+    poi_id: str,
+    request: Request,
+    admin: dict[str, Any] = Depends(get_current_admin),
+):
+    """UC11: Admin xóa POI khỏi danh sách POI trên hệ thống."""
+    database = get_database(request)
+
+    try:
+        pois = database["pois"]
+        previous = pois.find_one({"id": poi_id})
+
+        if previous is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="POI not found",
+            )
+
+        result = pois.delete_one({"id": poi_id})
+        if result.deleted_count != 1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="POI could not be deleted. Refresh and retry.",
+            )
+
+        record_audit_event(
+            database,
+            actor=admin,
+            action="poi.delete",
+            resource_type="poi",
+            resource_id=poi_id,
+            outcome="success",
+            summary="Admin deleted a POI",
+            changes={
+                "name": {"before": previous.get("name"), "after": None},
+                "address": {"before": previous.get("address"), "after": None},
+            },
+        )
+
+        owner_id = previous.get("ownerId")
+        if owner_id and ObjectId.is_valid(str(owner_id)):
+            notify_owner_safely(
+                database,
+                owner_id=str(owner_id),
+                event_type="poi_deleted",
+                title="POI đã bị xóa",
+                message="POI của bạn đã được Admin xóa khỏi hệ thống.",
+                poi_id=poi_id,
+                submission_id=previous.get("submissionId"),
+            )
+
+        return {"message": "POI deleted", "poiId": poi_id}
+    except HTTPException:
+        raise
+    except PyMongoError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not delete POI",
+        ) from error
+
+
 @router.post("/pois/{poi_id}/request-revision")
 def request_poi_revision(
     poi_id: str,

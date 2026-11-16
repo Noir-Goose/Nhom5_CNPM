@@ -5,6 +5,7 @@ import {
   rejectPoiSubmission,
   getSystemPois,
   updateSystemPoi,
+  deleteSystemPoi,
   requestPoiRevision,
 } from "../../../services/adminPoiService";
 import "../../../pages/AdminPage.css";
@@ -209,6 +210,34 @@ function AdminPoiManagement() {
       await loadData();
     } catch (err) {
       setError(err.message || "Không thể gửi yêu cầu chỉnh sửa.");
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  async function handleDelete(item) {
+    const id = item._id ?? item.id ?? item.poiId;
+
+    if (!id) {
+      setError("Không tìm thấy mã POI.");
+      return;
+    }
+
+    const name = item.name ?? item.content?.vi?.name ?? "POI này";
+    if (!window.confirm(`Xóa "${name}" khỏi hệ thống? Thao tác này không thể hoàn tác.`)) {
+      return;
+    }
+
+    setProcessingId(id);
+    setError("");
+    setMessage("");
+
+    try {
+      await deleteSystemPoi(id);
+      setMessage("Đã xóa POI.");
+      await loadData();
+    } catch (err) {
+      setError(err.message || "Không thể xóa POI.");
     } finally {
       setProcessingId(null);
     }
@@ -785,6 +814,15 @@ function AdminPoiManagement() {
                                   onClick={() => handleRequestRevision(item)}
                                 >
                                   Yêu cầu sửa
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="admin-reject"
+                                  disabled={processingId !== null}
+                                  onClick={() => handleDelete(item)}
+                                >
+                                  Xóa
                                 </button>
                               </>
                             )}
