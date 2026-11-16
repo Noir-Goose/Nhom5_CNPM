@@ -111,7 +111,7 @@ def start_registration(
         if last_sent and (now - last_sent).total_seconds() < OTP_RESEND_COOLDOWN_SECONDS:
             raise ValueError("Please wait before requesting another OTP")
 
-    otp = f"{secrets.randbelow(10_000):04d}"
+    otp = f"{secrets.randbelow(1_000_000):06d}"
 
     record = {
         "email": email,
@@ -256,7 +256,7 @@ def resend_registration_otp(
             "Resend limit reached. Please start registration again later."
         )
 
-    otp = f"{secrets.randbelow(10_000):04d}"
+    otp = f"{secrets.randbelow(1_000_000):06d}"
     new_hash = _hash_otp(email, otp)
 
     # Replace the old OTP before sending the new one.
@@ -338,7 +338,7 @@ def start_password_reset(
     if last_sent and (now - last_sent).total_seconds() < OTP_RESEND_COOLDOWN_SECONDS:
         return {"message": generic_message}
 
-    otp = f"{secrets.randbelow(10_000):04d}"
+    otp = f"{secrets.randbelow(1_000_000):06d}"
     record = {
         "email": email,
         "otpHash": _hash_otp(email, otp),
@@ -425,7 +425,7 @@ def start_login_otp(database: Database, email: str) -> dict[str, str]:
     if last_sent and (now - last_sent).total_seconds() < OTP_RESEND_COOLDOWN_SECONDS:
         return {"message": generic_message}
 
-    otp = f"{secrets.randbelow(10_000):04d}"
+    otp = f"{secrets.randbelow(1_000_000):06d}"
     record = {
         "email": email,
         "otpHash": _hash_otp(email, otp),

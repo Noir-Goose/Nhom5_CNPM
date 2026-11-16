@@ -32,7 +32,7 @@ Password = Annotated[
 
 OtpCode = Annotated[
     str,
-    StringConstraints(pattern=r"^\d{4}$"),
+    StringConstraints(pattern=r"^\d{6}$"),
 ]
 
 
