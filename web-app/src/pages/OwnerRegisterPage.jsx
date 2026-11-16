@@ -229,7 +229,7 @@ export default function OwnerRegisterPage() {
             <p className="owner-register-eyebrow">XÁC MINH TÀI KHOẢN</p>
             <h1>Kiểm tra email</h1>
             <p className="owner-register-description">
-              Nhập mã OTP gồm 6 chữ số đã được gửi đến:
+              Nhập mã OTP gồm 4 chữ số đã được gửi đến:
             </p>
             <p className="owner-register-email">{form.email}</p>
 
@@ -240,13 +240,13 @@ export default function OwnerRegisterPage() {
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                placeholder="Nhập 6 chữ số"
+                placeholder="Nhập 4 chữ số"
                 value={otp}
                 onChange={(event) =>
-                  setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))
+                  setOtp(event.target.value.replace(/\D/g, "").slice(0, 4))
                 }
-                pattern="[0-9]{6}"
-                maxLength={6}
+                pattern="[0-9]{4}"
+                maxLength={4}
                 required
               />
 

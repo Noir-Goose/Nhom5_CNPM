@@ -159,7 +159,7 @@ function LoginPage() {
     "login-otp-verify": {
       eyebrow: "EMAIL SIGN-IN",
       title: "Nh\u1eadp m\u00e3 \u0111\u0103ng nh\u1eadp",
-      description: "Nh\u1eadp m\u00e3 6 ch\u1eef s\u1ed1 \u0111\u01b0\u1ee3c g\u1eedi t\u1edbi email c\u1ee7a b\u1ea1n.",
+      description: "Nh\u1eadp m\u00e3 4 ch\u1eef s\u1ed1 \u0111\u01b0\u1ee3c g\u1eedi t\u1edbi email c\u1ee7a b\u1ea1n.",
       submit: "X\u00e1c nh\u1eadn & \u0110\u0103ng nh\u1eadp",
       loading: "\u0110ang x\u00e1c minh...",
     },
@@ -308,9 +308,9 @@ function LoginPage() {
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  placeholder="Nhập mã 6 chữ số"
+                  pattern="[0-9]{4}"
+                  maxLength={4}
+                  placeholder="Nhập mã 4 chữ số"
                   value={otp}
                   onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
                   required
